@@ -93,7 +93,7 @@ export default function SignupForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* FULL NAME */}
               <div className="relative">
-                <label className="text-sm text-[#EC5D44]">Full Name</label>
+                <label className="text-sm ">Full Name</label>
                 <Input
                   {...register("fullName")}
                   placeholder="John Doe"
@@ -108,7 +108,7 @@ export default function SignupForm() {
 
               {/* EMAIL */}
               <div className="relative">
-                <label className="text-sm text-[#EC5D44]">Email</label>
+                <label className="text-sm">Email</label>
                 <Input
                   {...register("email")}
                   placeholder="m@example.com"
@@ -123,7 +123,7 @@ export default function SignupForm() {
 
               {/* PASSWORD */}
               <div className="relative">
-                <label className="text-sm text-[#EC5D44]">Password</label>
+                <label className="text-sm">Password</label>
                 <Input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
@@ -145,7 +145,7 @@ export default function SignupForm() {
 
               {/* CONFIRM PASSWORD */}
               <div className="relative">
-                <label className="text-sm text-[#EC5D44]">
+                <label className="text-sm ">
                   Confirm Password
                 </label>
                 <Input
