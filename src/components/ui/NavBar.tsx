@@ -28,7 +28,6 @@ const NAV_ITEMS: NavItem[] = [
 export default function NavBar() {
   const [isMobile, setIsMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const pathName = usePathname();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -36,9 +35,6 @@ export default function NavBar() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const isHome = pathName === "/";
-  const isActive = (href?: string) => pathName === href;
 
   if (isMobile) {
     return (
@@ -129,10 +125,7 @@ export default function NavBar() {
               key={item.name}
               href={item.href ?? "#"}
               className={cn(
-                "block rounded-lg  p-2",
-                isActive(item.href)
-                  ? "text-primary font-semibold"
-                  : "text-foreground hover:text-primary"
+                "block rounded-lg  p-2 text-foreground hover:text-primary"
               )}
             >
               {item.name}

@@ -28,7 +28,7 @@ const socials = [
 ];
 export default function Footer() {
   return (
-    <footer className="w-full h-full overflow-hidden pt-10 bg-background">
+    <footer className="w-full h-full overflow-hidden pt-20 bg-background">
 
       <div className="relative z-10 container mx-auto max-w-7xl xl:max-w-[1720px]">
         <div className="my-container grid grid-cols-1 lg:grid-cols-2 gap-5 pb-8">
