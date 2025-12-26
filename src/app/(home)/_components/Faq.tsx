@@ -106,7 +106,7 @@ export default function FAQ() {
       </div>
       {/* QA */}
       <div className="my-container flex sm:gap-18">
-        <Image src={Road} alt="" className="hidden sm:block object-contain" />
+        <Image src={Road} alt="" className="hidden sm:block w-[40%] object-contain" />
         <FaqContent />
       </div>
     </section>
