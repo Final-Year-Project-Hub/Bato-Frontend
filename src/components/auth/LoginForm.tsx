@@ -68,22 +68,22 @@ export default function LoginForm() {
             {/* LOGIN FORM */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="text-sm text-[#EC5D44]">Email</label>
+                <label className="text-sm text-[#dbeafe]">Email</label>
                 <Input
                   placeholder="m@example.com"
                   {...register("email")}
-                  className="h-10 mt-1 bg-white/20 border-white/20 placeholder:text-white/60"
+                  className="h-10 mt-1 bg-white/20 border-white/20 text-white placeholder:text-white/60"
                 />
                 {errors.email && (
                   <p className="text-red-400 text-sm mt-1">
                     {errors.email.message}
-                    
+
                   </p>
                 )}
               </div>
 
               <div className="relative">
-                <label className="text-sm text-[#EC5D44]">Password</label>
+                <label className="text-sm text-[#dbeafe]">Password</label>
                 <Input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
