@@ -1,6 +1,5 @@
 
 import NavBar from "@/components/ui/NavBar";
-import { ThemeProvider } from "@/components/theme-provider";
 import Footer from "@/components/ui/Footer";
 
 export default function RootLayout({
@@ -10,16 +9,10 @@ export default function RootLayout({
 }>) {
   return (
     <main>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
+    
         <NavBar />
         {children}
         <Footer />
-      </ThemeProvider>
-    </main>
+\    </main>
   );
 }
