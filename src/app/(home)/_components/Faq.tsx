@@ -91,7 +91,7 @@ async function FaqContent() {
 }
 export default function FAQ() {
   return (
-    <section className="pt-[70px] flex flex-col items-center bg-grey">
+    <section className="pt-17.5 flex flex-col items-center bg-grey">
       {/* Titles */}
       <div className="max-w-2xl flex flex-col items-center mb-10">
         <Subheading content="FAQ" className="bg-background" />
