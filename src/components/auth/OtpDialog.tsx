@@ -21,16 +21,20 @@ interface OtpDialogProps {
   onResend?: () => void;
 }
 
-export function OtpDialog({ open, onClose, onVerify, onResend }: OtpDialogProps) {
+export function OtpDialog({
+  open,
+  onClose,
+  onVerify,
+  onResend,
+}: OtpDialogProps) {
   const [otp, setOtp] = useState("");
-  const [otpTimer, setOtpTimer] = useState(30); // Timer for OTP validity
+  const [otpTimer, setOtpTimer] = useState(30);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // OTP validity timer
   useEffect(() => {
     if (!open) return;
 
-    // Reset OTP timer after render to avoid ESLint warning
     const timeout = setTimeout(() => setOtpTimer(30), 0);
 
     timerRef.current = setInterval(() => {
@@ -53,7 +57,7 @@ export function OtpDialog({ open, onClose, onVerify, onResend }: OtpDialogProps)
   const handleResend = () => {
     onResend?.();
     setOtp("");
-    setOtpTimer(30); // reset OTP timer
+    setOtpTimer(30);
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
@@ -74,10 +78,8 @@ export function OtpDialog({ open, onClose, onVerify, onResend }: OtpDialogProps)
           sm:max-w-[420px]
           rounded-2xl
           border border-white/10
-         bg-[#233845]/80
-        backdrop-blur-lg
-
-        
+          bg-[#233845]/80
+          backdrop-blur-lg
         "
       >
         <DialogHeader>
@@ -101,10 +103,12 @@ export function OtpDialog({ open, onClose, onVerify, onResend }: OtpDialogProps)
             <InputOTP
               maxLength={6}
               value={otp}
-              onChange={(value) => setOtp(value)}
-              className="gap-3"
+              onChange={(value: string) => {
+                const numericValue = value.replace(/\D/g, "");
+                setOtp(numericValue);
+              }}
             >
-              <InputOTPGroup>
+              <InputOTPGroup className="gap-3">
                 {[0, 1, 2, 3, 4, 5].map((i) => (
                   <InputOTPSlot
                     key={i}
@@ -134,7 +138,7 @@ export function OtpDialog({ open, onClose, onVerify, onResend }: OtpDialogProps)
               hover:bg-[#EC5D44]/90
               text-white
             "
-            disabled={otp.length !== 6 || otpTimer === 0} // disabled if OTP expired
+            disabled={otp.length !== 6 || otpTimer === 0}
             onClick={() => onVerify(otp)}
           >
             Verify OTP
@@ -144,11 +148,12 @@ export function OtpDialog({ open, onClose, onVerify, onResend }: OtpDialogProps)
           <div className="text-center mt-2">
             <button
               onClick={handleResend}
-              disabled={otpTimer > 0} // can only resend if expired
-              className={`
-                font-medium
-                ${otpTimer > 0 ? "text-white/50 cursor-not-allowed" : "text-[#EC5D44] hover:underline"}
-              `}
+              disabled={otpTimer > 0}
+              className={`font-medium ${
+                otpTimer > 0
+                  ? "text-white/50 cursor-not-allowed"
+                  : "text-[#EC5D44] hover:underline"
+              }`}
             >
               Resend OTP
             </button>

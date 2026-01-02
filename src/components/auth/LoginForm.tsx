@@ -30,7 +30,6 @@ export default function LoginForm() {
 
   return (
     <div className="relative min-h-screen bg-[#1e465e] flex items-center justify-center px-4">
-      
       {/* LOGO */}
       <div className="absolute top-6 right-6 z-50">
         <Logo />
@@ -38,7 +37,6 @@ export default function LoginForm() {
 
       {/* MAIN WRAPPER — CENTERED & RESPONSIVE */}
       <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row">
-
         {/* LEFT IMAGE */}
         <div
           className="hidden lg:block lg:w-7/12 min-h-[70vh] bg-cover bg-center"
@@ -68,22 +66,21 @@ export default function LoginForm() {
             {/* LOGIN FORM */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="text-sm text-[#EC5D44]">Email</label>
+                <label className="text-sm text-[#dbeafe]">Email</label>
                 <Input
                   placeholder="m@example.com"
                   {...register("email")}
-                  className="h-10 mt-1 bg-white/20 border-white/20 placeholder:text-white/60"
+                  className="h-10 mt-1 bg-white/20 border-white/20 text-white placeholder:text-white/60"
                 />
                 {errors.email && (
                   <p className="text-red-400 text-sm mt-1">
                     {errors.email.message}
-                    
                   </p>
                 )}
               </div>
 
               <div className="relative">
-                <label className="text-sm text-[#EC5D44]">Password</label>
+                <label className="text-sm text-[#dbeafe]">Password</label>
                 <Input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
@@ -103,7 +100,10 @@ export default function LoginForm() {
                 )}
               </div>
 
-              <div className="text-center text-sm text-[#EC5D44] cursor-pointer mt-2 hover:underline">
+              <div
+                onClick={() => router.push("/forgetpw")}
+                className="text-center text-sm text-[#EC5D44] cursor-pointer mt-2 hover:underline"
+              >
                 Forgot Password?
               </div>
 
