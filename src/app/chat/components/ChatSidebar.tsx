@@ -101,7 +101,7 @@ export default function ChatSidebar({ onNewChat }: ChatSidebarProps) {
         <div className="flex-1" />
       </aside>
 
-      {/* 🔍 Search Chat Modal */}
+      {/*  Search Chat Modal */}
       <SearchChatModal
         open={openSearch}
         chats={chatHistory}
