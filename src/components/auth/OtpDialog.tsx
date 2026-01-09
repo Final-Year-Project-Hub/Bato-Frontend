@@ -75,7 +75,7 @@ export function OtpDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="
-          sm:max-w-[420px]
+          sm:max-w-105
           rounded-2xl
           border border-white/10
           bg-[#233845]/80
