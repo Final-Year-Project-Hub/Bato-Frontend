@@ -11,6 +11,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { loginSchema, LoginFormValues } from "@/lib/validations/auth";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import { apiFetch } from "@/lib/api";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -25,7 +26,24 @@ export default function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    console.log(data);
+    try {
+      const res = await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      if (res.success) {
+        console.log(res);
+        router.push("/dashboard");
+      } else {
+        console.log(res.message);
+      }
+    } catch (e: any) {
+      console.error("Login error:", e.message);
+    }
   };
 
   return (

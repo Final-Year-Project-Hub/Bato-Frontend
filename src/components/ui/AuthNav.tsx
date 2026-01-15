@@ -13,9 +13,9 @@ export default function AuthNav() {
   // Desktop layout
   return (
     <nav
-      className={`shadow-sm relative flex justify-between items-center px-4  py-4  mx-auto bg-background border-b border-b-white/25`}
+      className={` shadow-sm relative flex justify-between items-center px-4  py-4  mx-auto bg-background border-b border-b-white/25`}
     >
-      <div className=" w-full h-full flex justify-between items-center z-50">
+      <div className="my-container w-full h-full flex justify-between items-center z-50">
         <div>
           <p className="text-primary text-2xl font-bold">Dashboard</p>
           <p>Welcome Back, {user} </p>

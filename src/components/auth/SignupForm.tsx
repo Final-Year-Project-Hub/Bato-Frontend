@@ -13,6 +13,7 @@ import { FcGoogle } from "react-icons/fc";
 import { OtpDialog } from "@/components/auth/OtpDialog";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import { apiFetch } from "@/lib/api";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -28,10 +29,80 @@ export default function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [otpOpen, setOtpOpen] = useState(false);
+  const [otpUserId, setOtpUserId] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
 
   const onSubmit = async (data: SignupFormValues) => {
-    console.log("Signup Data:", data);
-    setOtpOpen(true);
+    try {
+      const payload = {
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+      };
+
+      const result = await apiFetch("/auth/signup", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const isEmailVerification =
+        result?.success === true &&
+        result?.data?.otps?.some(
+          (o: any) => o?.purpose === "EMAIL_VERIFICATION"
+        );
+
+      if (isEmailVerification) {
+        setOtpEmail(result.data.email);
+        setOtpUserId(result.data.id);
+
+        setOtpOpen(true);
+        return;
+      }
+    } catch (error) {
+      console.error("Signup Error:", error);
+    }
+  };
+
+  const handleVerifyOtp = async (otp: string) => {
+    try {
+      const res = await apiFetch("/auth/verifyOtp", {
+        method: "POST",
+        body: JSON.stringify({
+          email: otpEmail,
+          userId: otpUserId,
+          otp,
+          purpose: "EMAIL_VERIFICATION",
+        }),
+      });
+
+      if (res.success) {
+        setOtpOpen(false);
+        router.push("/login");
+      } else {
+        console.log(res.message);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      const res = await apiFetch("/auth/resendOtp", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: otpUserId,
+          email: otpEmail,
+          purpose: "EMAIL_VERIFICATION",
+        }),
+      });
+
+      console.log(res.message); // toast.success(res.message)
+    } catch (e) {
+      console.error("Resend OTP error:", e);
+      // toast.error(...)
+    }
   };
 
   return (
@@ -60,7 +131,6 @@ export default function SignupForm() {
 
       {/* CENTER */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
-        
         <Card
           className="
             w-full
@@ -209,7 +279,8 @@ export default function SignupForm() {
       <OtpDialog
         open={otpOpen}
         onClose={() => setOtpOpen(false)}
-        onVerify={(otp) => console.log("Entered OTP:", otp)}
+        onVerify={handleVerifyOtp}
+        onResend={handleResendOtp}
       />
     </div>
   );
