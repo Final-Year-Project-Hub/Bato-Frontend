@@ -8,12 +8,17 @@ export default function Page() {
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
 
   const handleNewChat = () => {
-    setCurrentTitleIndex(prev => (prev + 1) % 4); // cycle through titles
+    setCurrentTitleIndex((prev) => (prev + 1) % 4); // cycles through TITLES
   };
 
   return (
-    <div className="flex h-screen">
-      <ChatSidebar onNewChat={handleNewChat} />
+    <div className="flex min-h-screen w-full bg-background text-foreground overflow-hidden">
+      {/* Sidebar (hidden on small screens) */}
+      <div className="hidden sm:flex">
+        <ChatSidebar onNewChat={handleNewChat} />
+      </div>
+
+      {/* Chat Interface */}
       <ChatInterface currentTitleIndex={currentTitleIndex} />
     </div>
   );

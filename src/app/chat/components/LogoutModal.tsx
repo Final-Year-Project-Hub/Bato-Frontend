@@ -13,7 +13,7 @@ export default function LogoutModal({ open, onClose, onConfirm }: LogoutModalPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="relative w-[360px] rounded-xl bg-[#2A2A2A] border border-white/10 p-6">
+      <div className="relative w-90 rounded-xl bg-[#2A2A2A] border border-white/10 p-6">
         {/* Close Icon */}
         <button
           onClick={onClose}
