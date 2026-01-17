@@ -64,8 +64,8 @@ export default function SignupForm() {
         <Card
           className="
             w-full
-            max-w-[475px]
-            min-h-[675px]
+            max-w-118.75
+            min-h-168.75
             px-8 py-8
             rounded-2xl
             text-white
