@@ -53,9 +53,10 @@ export function OtpDialog({
     };
   }, [open]);
 
-  // Handle resend OTP
   const handleResend = () => {
-    onResend?.();
+    if (!onResend) return;
+
+    onResend();
     setOtp("");
     setOtpTimer(30);
 
@@ -63,7 +64,7 @@ export function OtpDialog({
     timerRef.current = setInterval(() => {
       setOtpTimer((prev) => {
         if (prev <= 1) {
-          clearInterval(timerRef.current!);
+          if (timerRef.current) clearInterval(timerRef.current);
           return 0;
         }
         return prev - 1;
