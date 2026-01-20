@@ -46,20 +46,18 @@ export default function SignupForm() {
         body: JSON.stringify(payload),
       });
       console.log(result);
-      const isEmailVerification =
+      const shouldOpenOtp =
         result?.success === true &&
-    // ✅ After:
-result?.data?.otps?.some(
-  (o) => o?.purpose === "EMAIL_VERIFICATION"
-);
+        typeof result?.data?.id === "string" &&
+        typeof result?.data?.email === "string";
 
-      if (isEmailVerification) {
+      if (shouldOpenOtp) {
         setOtpEmail(result.data.email);
         setOtpUserId(result.data.id);
-
         setOtpOpen(true);
         return;
       }
+
     } catch (error) {
       console.error("Signup Error:", error);
     }
