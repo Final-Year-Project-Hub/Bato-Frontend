@@ -45,7 +45,7 @@ export default function SignupForm() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-
+      console.log(result);
       const isEmailVerification =
         result?.success === true &&
     // ✅ After:
@@ -76,7 +76,7 @@ result?.data?.otps?.some(
           purpose: "EMAIL_VERIFICATION",
         }),
       });
-
+      console.log(res);
       if (res.success) {
         setOtpOpen(false);
         router.push("/login");
