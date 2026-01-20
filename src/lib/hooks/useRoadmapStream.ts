@@ -16,7 +16,7 @@ type StreamArgs = {
   onError?: (err: string) => void;
 
   // optional debug
-  onRawChunk?: (chunk: string) => void;
+  onRawChunk?: (raw: string) => void;
 };
 
 export function useRoadmapStream() {
@@ -37,37 +37,6 @@ export function useRoadmapStream() {
       const controller = new AbortController();
       controllerRef.current = controller;
       setIsStreaming(true);
-
-      const handleEventObj = (obj: any) => {
-        if (!obj) return;
-
-        if (obj.event === "status" && typeof obj.data === "string") {
-          args.onStatus?.(obj.data);
-          return;
-        }
-
-        if (obj.event === "token" && typeof obj.data === "string") {
-          // ✅ ONLY send the actual text
-          args.onToken(obj.data);
-          return;
-        }
-
-        if (obj.event === "error" && typeof obj.data === "string") {
-          args.onError?.(obj.data);
-          return;
-        }
-
-        // roadmap created event shapes
-        if (obj.event === "roadmap_created" && typeof obj.data === "string") {
-          args.onRoadmapId?.(obj.data);
-          return;
-        }
-
-        if (typeof obj.roadmapId === "string") {
-          args.onRoadmapId?.(obj.roadmapId);
-          return;
-        }
-      };
 
       try {
         const res = await fetch(`${BACKEND}/api/roadmap/stream`, {
@@ -92,6 +61,52 @@ export function useRoadmapStream() {
         const decoder = new TextDecoder("utf-8");
         let buffer = "";
 
+        const handleData = (dataStr: string) => {
+          const s = dataStr.trim();
+          if (!s) return;
+
+          // If server sometimes sends multiple JSON objects stuck together:
+          // data: {...}\ndata: {...}
+          // we already join them below, but just in case:
+          const lines = s.split("\n").map((x) => x.trim()).filter(Boolean);
+
+          for (const line of lines) {
+            const cleaned = line.startsWith("data:")
+              ? line.replace(/^data:\s?/, "")
+              : line;
+
+            try {
+              const parsed = JSON.parse(cleaned);
+
+              if (parsed?.event === "status" && typeof parsed.data === "string") {
+                args.onStatus?.(parsed.data);
+                continue;
+              }
+
+              if (parsed?.event === "token" && typeof parsed.data === "string") {
+                // ✅ IMPORTANT: pass ONLY the token text
+                args.onToken(parsed.data);
+                continue;
+              }
+
+              if (parsed?.event === "error" && typeof parsed.data === "string") {
+                args.onError?.(parsed.data);
+                continue;
+              }
+
+              if (
+                parsed?.event === "roadmap_created" &&
+                typeof parsed.data === "string"
+              ) {
+                args.onRoadmapId?.(parsed.data);
+                continue;
+              }
+            } catch {
+              // not JSON → ignore
+            }
+          }
+        };
+
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
@@ -101,7 +116,7 @@ export function useRoadmapStream() {
 
           buffer += chunk;
 
-          // SSE events are separated by blank line
+          // SSE events separated by blank line
           while (buffer.includes("\n\n")) {
             const idx = buffer.indexOf("\n\n");
             const eventBlock = buffer.slice(0, idx);
@@ -114,23 +129,14 @@ export function useRoadmapStream() {
               .filter((l) => l.startsWith("data:"))
               .map((l) => l.replace(/^data:\s?/, ""));
 
-            if (!dataLines.length) continue;
-
-            // sometimes backend sends one json per data line
-            for (const line of dataLines) {
-              const payload = line.trim();
-              if (!payload) continue;
-
-              try {
-                const obj = JSON.parse(payload);
-                handleEventObj(obj);
-              } catch {
-                // if backend ever sends plain text, treat as token
-                args.onToken(payload);
-              }
+            if (dataLines.length) {
+              handleData(dataLines.join("\n"));
             }
           }
         }
+
+        // flush tail
+        if (buffer.trim()) handleData(buffer);
       } catch (e: any) {
         if (e?.name !== "AbortError") {
           args.onError?.(e?.message || "Stream error");
@@ -141,7 +147,7 @@ export function useRoadmapStream() {
         controllerRef.current = null;
       }
     },
-    [BACKEND, isStreaming]
+    [BACKEND, isStreaming],
   );
 
   return { startStream, abort, isStreaming };
