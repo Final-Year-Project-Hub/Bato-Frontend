@@ -48,9 +48,10 @@ export default function SignupForm() {
 
       const isEmailVerification =
         result?.success === true &&
-        result?.data?.otps?.some(
-          (o: any) => o?.purpose === "EMAIL_VERIFICATION"
-        );
+    // ✅ After:
+result?.data?.otps?.some(
+  (o) => o?.purpose === "EMAIL_VERIFICATION"
+);
 
       if (isEmailVerification) {
         setOtpEmail(result.data.email);
@@ -134,8 +135,8 @@ export default function SignupForm() {
         <Card
           className="
             w-full
-            max-w-[475px]
-            min-h-[675px]
+            max-w-118.75
+            min-h-168.75
             px-8 py-8
             rounded-2xl
             text-white

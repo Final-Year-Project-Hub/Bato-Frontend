@@ -1,4 +1,4 @@
-import { Check, MessageCircle, Star } from "lucide-react";
+
 
 export type ActivityItem = {
   id: string;

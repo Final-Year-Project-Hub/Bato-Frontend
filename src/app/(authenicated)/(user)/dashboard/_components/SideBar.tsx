@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
+
 import {
   PanelLeft,
   ChartLine,
@@ -12,82 +12,78 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 
-const roadmaps = [
-  { label: "My Roadmaps", icon: Waypoints },
-  { label: "Create Roadmap", icon: Plus },
-  { label: "Chat", icon: MessageCircle },
-  { label: "Settings", icon: Settings },
+type ViewType = "dashboard" | "settings" | "roadmaps" | "chat";
+
+const menuItems = [
+  { label: "My Roadmaps", icon: Waypoints, view: "roadmaps" as ViewType },
+  { label: "Create Roadmap", icon: Plus, view: "chat" as ViewType },
+  { label: "Chat", icon: MessageCircle, view: "" as ViewType },
+  { label: "Settings", icon: Settings, view: "settings" as ViewType },
 ];
 
 export default function SideBar({
   collapsed,
   onCollapsedChange,
+  currentView,
+  onViewChange,
 }: {
   collapsed: boolean;
   onCollapsedChange: (v: boolean) => void;
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
 }) {
-  const [openSearch, setOpenSearch] = useState(false);
-
   return (
-    <>
-      <aside
-        className={clsx(
-          "h-screen bg-background border-l border-white/5 flex flex-col transition-all duration-300 ease-in-out",
-          collapsed ? "w-16" : "w-75"
-        )}
-      >
-        {/* Header */}
-        <div className="relative flex items-center px-4 py-4 justify-between">
-          {!collapsed ? (
-            <>
-              <Image src="/logo.svg" alt="bato.ai" width={100} height={28} />
-              <HoverButton
-                onClick={() => onCollapsedChange(true)}
-                tooltip="Close sidebar"
-              />
-            </>
-          ) : (
-            <HoverButtonCollapsed
-              onClick={() => onCollapsedChange(false)}
-              tooltip="Open sidebar"
+    <aside
+      className={clsx(
+        "h-screen bg-background border-r border-white/5 flex flex-col transition-all duration-300 ease-in-out",
+        collapsed ? "w-16" : "w-75"
+      )}
+    >
+      {/* Header */}
+      <div className="relative flex items-center px-4 py-4 justify-between">
+        {!collapsed ? (
+          <>
+            <Image src="/logo.svg" alt="bato.ai" width={100} height={28} />
+            <HoverButton
+              onClick={() => onCollapsedChange(true)}
+              tooltip="Close sidebar"
             />
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="mt-2 flex flex-col items-center gap-1 px-2">
-          <SidebarItem
-            icon={<ChartLine size={18} />}
-            label="Dashboard"
-            collapsed={collapsed}
-            onClick={() => setOpenSearch(true)}
+          </>
+        ) : (
+          <HoverButtonCollapsed
+            onClick={() => onCollapsedChange(false)}
+            tooltip="Open sidebar"
           />
-        </div>
+        )}
+      </div>
 
-        {/* Roadmaps */}
-        <div className="mt-5 flex flex-col items-center gap-1 px-2">
-          {collapsed
-            ? roadmaps.map(({ label, icon: Icon }) => (
-                <SidebarItem
-                  key={label}
-                  icon={<Icon size={18} />}
-                  label={label}
-                  collapsed={true}
-                />
-              ))
-            : roadmaps.map(({ label, icon: Icon }) => (
-                <SidebarItem
-                  key={label}
-                  icon={<Icon size={18} />}
-                  label={label}
-                  collapsed={false}
-                />
-              ))}
-        </div>
+      {/* Dashboard */}
+      <div className="mt-2 flex flex-col items-center gap-1 px-2">
+        <SidebarItem
+          icon={<ChartLine size={18} />}
+          label="Dashboard"
+          collapsed={collapsed}
+          active={currentView === "dashboard"}
+          onClick={() => onViewChange("dashboard")}
+        />
+      </div>
 
-        <div className="flex-1" />
-      </aside>
-    </>
+      {/* Menu Items */}
+      <div className="mt-2 flex flex-col items-center gap-1 px-2">
+        {menuItems.map(({ label, icon: Icon, view }) => (
+          <SidebarItem
+            key={label}
+            icon={<Icon size={18} />}
+            label={label}
+            collapsed={collapsed}
+            active={currentView === view}
+            onClick={() => onViewChange(view)}
+          />
+        ))}
+      </div>
+
+      <div className="flex-1" />
+    </aside>
   );
 }
 
@@ -96,11 +92,13 @@ function SidebarItem({
   icon,
   label,
   collapsed,
+  active,
   onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   collapsed: boolean;
+  active?: boolean;
   onClick?: () => void;
 }) {
   return (
@@ -108,9 +106,10 @@ function SidebarItem({
       <button
         onClick={onClick}
         className={clsx(
-          "flex items-center w-full rounded-md transition hover:bg-grey",
-          "text-foregroound text-[14px]",
-          collapsed ? "justify-center h-10" : "gap-3 px-3 py-2 justify-start"
+          "flex items-center w-full rounded-md transition",
+          "text-foreground text-[14px]",
+          collapsed ? "justify-center h-10" : "gap-3 px-3 py-2 justify-start",
+          active ? "bg-primary/10 text-primary" : "hover:bg-grey"
         )}
       >
         <span>{icon}</span>
