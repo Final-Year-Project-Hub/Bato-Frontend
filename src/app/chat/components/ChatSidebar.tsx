@@ -5,9 +5,22 @@ import Image from "next/image";
 import { SquarePen, Search, GitBranch, PanelLeft } from "lucide-react";
 import clsx from "clsx";
 import SearchChatModal from "./SearchChatModal";
+import { useAuth } from "@/app/features/auth/hooks/useAuth";
 
-const roadmaps = ["React Roadmap","Next Roadmap","Python Roadmap","Network Programming Roadmap"];
-const chatHistory = ["React roadmap for beginners","Next.js app router explanation","Python backend roadmap","Networking basics"];
+const roadmaps = [
+  "React Roadmap",
+  "Next Roadmap",
+  "Python Roadmap",
+  "Network Programming Roadmap",
+];
+
+//  Mock chat history (replace later with real data)
+const chatHistory = [
+  "React roadmap for beginners",
+  "Next.js app router explanation",
+  "Python backend roadmap",
+  "Networking basics",
+];
 
 interface ChatSidebarProps { 
   onNewChat: () => void;

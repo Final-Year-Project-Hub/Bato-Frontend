@@ -8,8 +8,9 @@ export default function Page() {
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
 
   const handleNewChat = () => {
-    setCurrentTitleIndex((prev) => (prev + 1) % 4); // cycles through TITLES
+    setCurrentTitleIndex((prev) => (prev + 1) % 4); 
   };
+
 
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground overflow-hidden">

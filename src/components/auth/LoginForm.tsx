@@ -12,10 +12,12 @@ import { loginSchema, LoginFormValues } from "@/lib/validations/auth";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/app/features/auth/hooks/useAuth";
 
 export default function LoginForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const { refresh } = useAuth();
 
   const {
     register,
@@ -36,8 +38,8 @@ export default function LoginForm() {
       });
 
       if (res.success) {
-        console.log(res);
-        router.push("/dashboard");
+        await refresh();
+        router.push("/chat");
       } else {
         console.log(res.message);
       }

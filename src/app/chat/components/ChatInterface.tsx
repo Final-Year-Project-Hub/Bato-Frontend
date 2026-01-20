@@ -5,8 +5,17 @@ import { ArrowUp, User, ChevronDown, LayoutDashboard, LogOut } from "lucide-reac
 import Image from "next/image";
 import LogoutModal from "./LogoutModal";
 import { useRouter } from "next/navigation";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useAuth } from "@/app/features/auth/hooks/useAuth";
+import { useHealth } from "@/lib/hooks/useHealth";
+import { useChat } from "@/lib/hooks/useChat";
+import { useRoadmapStream } from "@/lib/hooks/useRoadmapStream";
 
+type ChatMsg = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt?: number;
+};
 
 const TITLES = [
   { normal: "Ready to Unlock ", highlight: "New Knowledge?" },
@@ -24,7 +33,24 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
   const [typedLength, setTypedLength] = useState(0);
   const [showLogout, setShowLogout] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { startStream, isStreaming } = useRoadmapStream();
+
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // chat state
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
+
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  const { status: healthStatus } = useHealth();
+  const { startChat, addMessage } = useChat();
   const router = useRouter();
+  const auth = useAuth();
+  const jsonBufferRef = useRef("");
+  const jsonModeRef = useRef(false);
+  const renderedRoadmapRef = useRef(false);
 
   const { fullText, normalLength } = useMemo(() => {
     const safeIndex = currentTitleIndex >= 0 && currentTitleIndex < TITLES.length ? currentTitleIndex : 0;
@@ -32,6 +58,7 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
     return { fullText: normal + highlight, normalLength: normal.length };
   }, [currentTitleIndex]);
 
+  // typing effect
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setTypedLength(0);
@@ -51,26 +78,279 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
 
   const typedText = fullText.slice(0, typedLength);
 
+  // auto scroll
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, loading]);
+
   const handleLogout = () => {
     setShowLogout(false);
-    // add actual logout logic here
   };
+
+  // small helper for ids
+  const uid = () =>
+    typeof crypto !== "undefined"
+      ? crypto.randomUUID()
+      : String(Date.now() + Math.random());
+
+  const sendMessage = async () => {
+    if (!message.trim() || loading || isStreaming) return;
+
+    const text = message.trim();
+    setMessage("");
+    setLoading(true);
+
+    const thinkingId = uid();
+    const userTempId = uid();
+
+    // optimistic UI
+    const optimisticUser: ChatMsg = {
+      id: userTempId,
+      role: "user",
+      content: text,
+      createdAt: Date.now(),
+    };
+
+    setMessages((prev) => [
+      ...prev,
+      optimisticUser,
+      { id: thinkingId, role: "assistant", content: "", createdAt: Date.now() },
+    ]);
+
+    // IMPORTANT: build history from a local snapshot (prev + this user msg)
+    const nextHistory = [...messages, optimisticUser].map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    try {
+      let currentChatId = chatId;
+
+      // 1) Ensure chat exists
+      if (!currentChatId) {
+        const res = await startChat({
+          initialMessage: text,
+          userId: auth?.user?.id,
+        });
+
+        if (!res?.success) throw new Error(res?.message || "Chat failed");
+
+        currentChatId = res.data?.id;
+        if (!currentChatId) throw new Error("No chatId returned");
+
+        setChatId(currentChatId);
+        router.replace(`/chat/${currentChatId}`);
+      } else {
+        // If chat already exists, persist the user message
+        await addMessage(currentChatId, { role: "user", content: text });
+      }
+
+      // 2) Stream assistant
+      let full = "";
+      let roadmapId: string | undefined;
+
+      await startStream({
+        message: text,
+        chatSessionId: currentChatId,
+        conversation_history: nextHistory,
+        strictMode: false,
+
+        onRoadmapId: (id) => {
+          roadmapId = id;
+        },
+
+        onToken: (t) => {
+          const chunk = t || "";
+
+          // If we already rendered roadmap titles, ignore any more json spam
+          if (renderedRoadmapRef.current) return;
+
+          // Detect start of JSON mode (first time we see "{")
+          if (!jsonModeRef.current) {
+            const idx = chunk.indexOf("{");
+            if (idx !== -1) {
+              jsonModeRef.current = true;
+              jsonBufferRef.current = chunk.slice(idx); // start buffering from "{"
+            } else {
+              // normal text stream
+              full += chunk;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === thinkingId ? { ...m, content: full } : m,
+                ),
+              );
+            }
+            return;
+          }
+
+          // JSON mode: keep buffering until it becomes valid JSON
+          jsonBufferRef.current += chunk;
+
+          // Try parse
+          try {
+            const summary = roadmapTitlesFromJson(jsonBufferRef.current);
+            if (summary) {
+              renderedRoadmapRef.current = true; // stop future json rendering
+
+              // show only titles
+              full = summary;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === thinkingId ? { ...m, content: summary } : m,
+                ),
+              );
+
+              return;
+            }
+          } catch {
+            // not complete JSON yet -> keep buffering, DO NOT print anything
+          }
+        },
+
+        onStatus: (s) => {
+          // optional: show status somewhere or ignore
+          // console.log("status:", s);
+        },
+
+        onError: (err) => {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === thinkingId ? { ...m, content: err } : m)),
+          );
+        },
+      });
+
+      // 3) Save assistant message (ONLY if non-empty)
+      if (full.trim()) {
+        await addMessage(currentChatId, {
+          role: "assistant",
+          content: full,
+          roadmapId,
+        });
+      } else {
+        // avoid "role and content are required"
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === thinkingId
+              ? { ...m, content: "No response from AI. Try again." }
+              : m,
+          ),
+        );
+      }
+    } catch (e: any) {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === thinkingId ? { ...m, content: e?.message || "Error" } : m,
+        ),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const tryRoadmapTitles = (raw: string) => {
+    // handle ```json ... ``` too
+    let t = raw.trim();
+    t = t
+      .replace(/^```json/i, "")
+      .replace(/```$/, "")
+      .trim();
+
+    // quick reject
+    if (!t.startsWith("{")) return null;
+
+    try {
+      const obj = JSON.parse(t);
+
+      if (!obj?.phases || !Array.isArray(obj.phases)) return null;
+
+      const lines: string[] = [];
+
+      lines.push(`Roadmap: ${obj.goal ?? "Your goal"}`);
+      lines.push("");
+
+      obj.phases.forEach((p: any, i: number) => {
+        lines.push(`${p.title ?? "Untitled"}`);
+
+        const topics = Array.isArray(p.topics) ? p.topics : [];
+        for (const topic of topics) {
+          if (topic?.title) lines.push(`  • ${topic.title}`);
+        }
+
+        lines.push("");
+      });
+
+      return lines.join("\n").trim();
+    } catch {
+      return null;
+    }
+  };
+
+  const roadmapTitlesFromJson = (jsonText: string) => {
+    const obj = JSON.parse(jsonText);
+    if (!obj?.phases || !Array.isArray(obj.phases)) return null;
+
+    const lines: string[] = [];
+
+    lines.push(`Roadmap: ${obj.goal ?? "Your goal"}`);
+    lines.push(""); // blank line
+
+    obj.phases.forEach((p: any, i: number) => {
+      lines.push(`Phase ${i + 1}: ${p.title}`);
+      const topics = Array.isArray(p.topics) ? p.topics : [];
+
+      topics.forEach((t: any) => {
+        if (t?.title) lines.push(`  • ${t.title}`);
+      });
+
+      lines.push(""); // blank line between phases
+    });
+
+    return lines.join("\n");
+  };
+
+  const renderChatInput = () => (
+    <div className="flex items-center gap-3 w-full max-w-3xl h-14 bg-[#2A2A2A] rounded-full px-6 border border-white/10">
+      <Image src="/images/bato.png" alt="Bato" width={32} height={32} />
+      <input
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+        placeholder="Ask me a Roadmap"
+        className="flex-1 bg-transparent outline-none text-base text-white placeholder:text-gray-400"
+        disabled={loading}
+      />
+      <button
+        onClick={sendMessage}
+        disabled={loading || !message.trim()}
+        className="bg-[#E96559] rounded-full p-2.5 disabled:opacity-60"
+      >
+        <ArrowUp size={22} className="text-[#282828]" />
+      </button>
+    </div>
+  );
 
   return (
     <main className="flex-1 relative flex flex-col bg-grey p-4 sm:p-6">
       {/* Top Right Menu */}
-      <div className="absolute top-4 right-4 sm:right-6 z-20 flex items-center gap-3">
-  {/* Theme toggle on the left */}
-  <ThemeToggle />
-
-  {/* User menu */}
-  <button
-    onClick={() => setOpen(!open)}
-    className="flex items-center gap-2 text-popover-foreground hover:opacity-80"
-  >
-    <User size={18} />
-    <ChevronDown size={14} />
-  </button>
+      <div className="absolute top-4 right-6 z-20 flex items-center">
+        <div
+          className={`w-2 h-2 rounded-full ${
+            healthStatus === "connected"
+              ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
+              : healthStatus === "degraded"
+                ? "bg-amber-500"
+                : healthStatus === "error"
+                  ? "bg-red-500"
+                  : "bg-gray-300 animate-pulse"
+          }`}
+        />
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 text-white/80 hover:text-white"
+        >
+          <User size={18} />
+          <ChevronDown size={14} />
+        </button>
 
   {open && (
     <div className="absolute right-0 top-full mt-3 w-40 bg-grey border border-border rounded-lg shadow-lg">
@@ -94,32 +374,44 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
   )}
 </div>
 
-      {/* Center */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 sm:gap-6">
-        <p className="text-blue text-[18px] sm:text-[20px] text-center px-2 sm:px-0">
-          <span>{typedText.slice(0, normalLength)}</span>
-          <span className="text-[#E96559]">{typedText.slice(normalLength)}</span>
-          {typedLength < fullText.length && <span className="animate-blink">|</span>}
-        </p>
-
-        <div className="flex items-center gap-2 sm:gap-3 w-full max-w-150 h-12 sm:h-12.5  rounded-full px-4 sm:px-5 border border-okay">
-          {/* ✅ Fixed Next.js Image */}
-          <Image
-            src="/images/bato.png"
-            alt="Bato"
-            width={32}
-            height={32}
-            style={{ objectFit: "contain", width: "32px", height: "32px" }}
-          />
-          <input
-            placeholder="Ask me a Roadmap"
-            className="flex-1 bg-transparent outline-none text-sm sm:text-base text-blue placeholder:text-gray"
-          />
-          <button className="bg-[#E96559] rounded-full p-2 sm:p-2.5 shrink-0">
-            <ArrowUp size={20} className="text-grey" />
-          </button>
+      {/* Title (show only when no messages yet, like a landing state) */}
+      {messages.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-6">
+          <p className="text-[#DDDDDD] text-[20px] text-center">
+            <span className="text-[#DDDDDD]">
+              {typedText.slice(0, normalLength)}
+            </span>
+            <span className="text-[#E96559]">
+              {typedText.slice(normalLength)}
+            </span>
+            {typedLength < fullText.length && (
+              <span className="animate-blink">|</span>
+            )}
+          </p>
+          {/* INPUT IN THE CENTER AT FIRST */}
+          {renderChatInput()}
         </div>
-      </div>
+      )}
+
+      {/* Chat messages area */}
+      {messages.length > 0 && (
+        <>
+          {/* Messages (scrollable) */}
+          <div className="flex-1 overflow-y-auto pr-2 pt-10">
+            <div className="max-w-3xl mx-auto space-y-3">
+              {messages.map((m) => (
+                <ChatBubble key={m.id} role={m.role} content={m.content} />
+              ))}
+              <div ref={bottomRef} />
+            </div>
+          </div>
+
+          {/* Input (pinned at bottom) */}
+          <div className="mt-4 flex items-center justify-center">
+            {renderChatInput()}
+          </div>
+        </>
+      )}
 
       <LogoutModal open={showLogout} onClose={() => setShowLogout(false)} onConfirm={handleLogout} />
 
@@ -131,5 +423,28 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
         .animate-blink { animation: blink 1s infinite; }
       `}</style>
     </main>
+  );
+}
+
+function ChatBubble({
+  role,
+  content,
+}: {
+  role: "user" | "assistant";
+  content: string;
+}) {
+  const isUser = role === "user";
+  return (
+    <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"}`}>
+      <div
+        className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed border ${
+          isUser
+            ? "bg-[#E96559] text-foreground border-white/10"
+            : "bg-[#2A2A2A] text-white border-white/10"
+        }`}
+      >
+        {content}
+      </div>
+    </div>
   );
 }

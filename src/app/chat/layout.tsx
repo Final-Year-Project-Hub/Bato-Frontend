@@ -8,18 +8,16 @@ export default function ChatLayout() {
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
 
   const handleNewChat = () => {
-    setCurrentTitleIndex((prev) => (prev + 1) % 4); // cycles through 0–3
+    setCurrentTitleIndex((prev) => (prev + 1) % 4); // cycle through titles
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-[#1e1e1e] text-white overflow-hidden">
-      {/* Sidebar (hidden on small screens) */}
-      <div className="hidden md:flex">
+      <div className="flex h-screen w-screen bg-[#1e1e1e] text-white">
+        {/* Sidebar */}
         <ChatSidebar onNewChat={handleNewChat} />
-      </div>
 
-      {/* Chat Interface */}
-      <ChatInterface currentTitleIndex={currentTitleIndex} />
-    </div>
+        {/* Chat Interface */}
+        <ChatInterface currentTitleIndex={currentTitleIndex} />
+      </div>
   );
 }

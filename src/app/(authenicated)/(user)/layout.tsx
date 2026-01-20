@@ -6,7 +6,5 @@ export default async function AuthenticatedLayout({
 }: {
   children: ReactNode;
 }) {
-  //   const user = await getSignedInUser();
-
   return <AuthenticatedShell>{children}</AuthenticatedShell>;
 }
