@@ -11,13 +11,14 @@ import { ThemeToggle } from "./ThemeToggle";
 export interface NavItem {
   name: string;
   href?: string;
+  scrollTo?: string; // ID of section to scroll to
 }
 
 const NAV_ITEMS: NavItem[] = [
   { name: "Home", href: "/" },
-  { name: "Features", href: "/" },
-  { name: "About us", href: "/" },
-  { name: "How It Works", href: "/" },
+  { name: "Features", scrollTo: "features" },
+  { name: "About us", href: "/about-us" }, // Different page
+  { name: "How It Works", scrollTo: "how-it-works" },
 ];
 
 export default function NavBar() {
@@ -30,6 +31,16 @@ export default function NavBar() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const handleNavClick = (item: NavItem) => {
+    if (item.scrollTo) {
+      const element = document.getElementById(item.scrollTo);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+    setMobileOpen(false);
+  };
 
   // MOBILE NAV
   if (isMobile) {
@@ -75,16 +86,26 @@ export default function NavBar() {
               </div>
 
               <div className="px-5 space-y-4">
-                {NAV_ITEMS.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href ?? "#"}
-                    className="block rounded-lg font-medium text-foreground"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                {NAV_ITEMS.map((item) =>
+                  item.scrollTo ? (
+                    <button
+                      key={item.name}
+                      onClick={() => handleNavClick(item)}
+                      className="block w-full text-left rounded-lg font-medium text-foreground"
+                    >
+                      {item.name}
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.name}
+                      href={item.href ?? "#"}
+                      className="block rounded-lg font-medium text-foreground"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  )
+                )}
               </div>
             </div>
           </>
@@ -106,15 +127,29 @@ export default function NavBar() {
 
         {/* Nav Links */}
         <div className="flex space-x-9">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href ?? "#"}
-              className={cn("block rounded-lg p-2 text-foreground hover:text-primary")}
-            >
-              {item.name}
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) =>
+            item.scrollTo ? (
+              <button
+                key={item.name}
+                onClick={() => handleNavClick(item)}
+                className={cn(
+                  "block rounded-lg p-2 text-foreground hover:text-primary"
+                )}
+              >
+                {item.name}
+              </button>
+            ) : (
+              <Link
+                key={item.name}
+                href={item.href ?? "#"}
+                className={cn(
+                  "block rounded-lg p-2 text-foreground hover:text-primary"
+                )}
+              >
+                {item.name}
+              </Link>
+            )
+          )}
         </div>
 
         {/* Right Actions */}

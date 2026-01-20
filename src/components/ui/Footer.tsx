@@ -30,7 +30,7 @@ export default function Footer() {
   return (
     <footer className="w-full h-full overflow-hidden pt-20 bg-background">
 
-      <div className="relative z-10 container mx-auto max-w-7xl xl:max-w-[1720px]">
+      <div className="relative z-10 container mx-auto max-w-7xl xl:max-w-430">
         <div className="my-container grid grid-cols-1 lg:grid-cols-2 gap-5 pb-8">
           <div className="max-w-md">
             <Image
@@ -39,7 +39,7 @@ export default function Footer() {
               priority
               width={284}
               height={67}
-              className="w-1/2 sm:w-[284px] h-auto"
+              className="w-1/2 sm:w-71 h-auto"
             />
             <div className="text-left pt-4">
               <p className="text-foreground text-lg">

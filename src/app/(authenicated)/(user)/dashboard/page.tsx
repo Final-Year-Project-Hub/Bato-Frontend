@@ -10,7 +10,7 @@ import {
   Star,
 } from "lucide-react";
 import Link from "next/link";
-import RoadmapCard, { Roadmapcard } from "./_components/RoadmapCard";
+import RoadmapCard, { Roadmapcard } from "./_components/RoadmapCard"
 import Activity, { ActivityItem } from "./_components/Activity";
 
 type Stat = {
@@ -95,7 +95,7 @@ export default function Page() {
       </div>
       <div className="flex justify-between">
         <p className="text-primary text-xl font-semibold">Your Roadmaps</p>
-        <Link href="/dashboard" className="text-sm text-secondary font-medium">
+        <Link href="/dashboard/my-roadmaps" className="text-sm text-secondary font-medium">
           View All
         </Link>
       </div>

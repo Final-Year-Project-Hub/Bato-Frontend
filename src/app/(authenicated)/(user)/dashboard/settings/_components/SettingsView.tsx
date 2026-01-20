@@ -11,7 +11,7 @@ export default function SettingsView() {
   const [activeTab, setActiveTab] = useState<TabType>("profile");
 
   return (
-    <div className="w-full  px-10 pb-8 space-y-4">
+      <div className="w-full px-10 py-8 space-y-4">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold -mt-2.5">Settings</h1>
