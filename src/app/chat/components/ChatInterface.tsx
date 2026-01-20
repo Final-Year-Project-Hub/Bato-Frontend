@@ -146,88 +146,56 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
       }
 
       // 2) Stream assistant
-      let full = "";
       let roadmapId: string | undefined;
+      let assistantText = "";
 
+      let rawStream = ""; // accumulates EVERYTHING coming from AI
+      let humanText = ""; // normal assistant text (if not JSON)
       await startStream({
         message: text,
         chatSessionId: currentChatId,
         conversation_history: nextHistory,
         strictMode: false,
 
+        onRawChunk: (c) => console.log("[SSE raw chunk]", c),
+
         onRoadmapId: (id) => {
           roadmapId = id;
         },
 
         onToken: (t) => {
-          const chunk = t || "";
+          console.log("[SSE token]", t);
 
-          // If we already rendered roadmap titles, ignore any more json spam
-          if (renderedRoadmapRef.current) return;
+          // t should be plain text ONLY
+          assistantText += t;
 
-          // Detect start of JSON mode (first time we see "{")
-          if (!jsonModeRef.current) {
-            const idx = chunk.indexOf("{");
-            if (idx !== -1) {
-              jsonModeRef.current = true;
-              jsonBufferRef.current = chunk.slice(idx); // start buffering from "{"
-            } else {
-              // normal text stream
-              full += chunk;
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === thinkingId ? { ...m, content: full } : m,
-                ),
-              );
-            }
-            return;
-          }
-
-          // JSON mode: keep buffering until it becomes valid JSON
-          jsonBufferRef.current += chunk;
-
-          // Try parse
-          try {
-            const summary = roadmapTitlesFromJson(jsonBufferRef.current);
-            if (summary) {
-              renderedRoadmapRef.current = true; // stop future json rendering
-
-              // show only titles
-              full = summary;
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === thinkingId ? { ...m, content: summary } : m,
-                ),
-              );
-
-              return;
-            }
-          } catch {
-            // not complete JSON yet -> keep buffering, DO NOT print anything
-          }
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === thinkingId ? { ...m, content: assistantText } : m,
+            ),
+          );
         },
-
         onStatus: (s) => {
+          console.log("[SSE status]", s);
           // optional: show status somewhere or ignore
           // console.log("status:", s);
         },
 
         onError: (err) => {
+          console.log("[SSE error]", err);
           setMessages((prev) =>
             prev.map((m) => (m.id === thinkingId ? { ...m, content: err } : m)),
           );
         },
       });
 
-      // 3) Save assistant message (ONLY if non-empty)
-      if (full.trim()) {
+      if (assistantText.trim()) {
         await addMessage(currentChatId, {
           role: "assistant",
-          content: full,
+          content: assistantText,
           roadmapId,
         });
       } else {
-        // avoid "role and content are required"
         setMessages((prev) =>
           prev.map((m) =>
             m.id === thinkingId
@@ -447,4 +415,58 @@ function ChatBubble({
       </div>
     </div>
   );
+}
+
+function extractRoadmapLiveSummary(raw: string) {
+  // remove ```json fences if present
+  const text = raw.replace(/```json|```/g, "").trim();
+
+  // goal
+  const goalMatch = text.match(/"goal"\s*:\s*"([^"]+)"/);
+  const goal = goalMatch?.[1];
+
+  // phase titles (works even on partial JSON)
+  const phaseTitleMatches = [...text.matchAll(/"title"\s*:\s*"([^"]+)"/g)].map(
+    (m) => m[1],
+  );
+
+  // We only want phase titles + topic titles, but JSON contains MANY "title".
+  // Trick: phases are like: "phases":[ { "title":"Phase 1..."
+  // We'll detect Phase titles by "Phase" prefix or by position.
+  const phaseTitles = phaseTitleMatches.filter((t) =>
+    /^Phase\s*\d+\s*:/i.test(t),
+  );
+
+  // topics: after phase title, topic titles usually don't start with "Phase"
+  const topicTitles = phaseTitleMatches.filter(
+    (t) => !/^Phase\s*\d+\s*:/i.test(t),
+  );
+
+  // Build summary in readable form
+  const lines: string[] = [];
+  if (goal) {
+    lines.push(`Roadmap: ${goal}`);
+    lines.push("");
+  } else {
+    lines.push(`Roadmap: ...`);
+    lines.push("");
+  }
+
+  // If we have phase titles, print them
+  if (phaseTitles.length) {
+    // For each phase, try to attach first 2 topics (optional nice UX)
+    // We can't reliably map topics to phases from partial JSON without full parse,
+    // so we just list phase titles live.
+    phaseTitles.forEach((pt) => {
+      const clean = pt.replace(/^Phase\s*\d+:\s*/i, "").trim();
+      // keep original numbering from pt
+      const numMatch = pt.match(/^Phase\s*(\d+)/i);
+      const n = numMatch?.[1] ?? "";
+      lines.push(`Phase ${n}: ${clean}`);
+    });
+  } else {
+    lines.push("Generating phases...");
+  }
+
+  return lines.join("\n");
 }

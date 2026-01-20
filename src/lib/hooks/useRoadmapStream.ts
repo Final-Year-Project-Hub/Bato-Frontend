@@ -14,6 +14,9 @@ type StreamArgs = {
   onRoadmapId?: (roadmapId: string) => void;
   onStatus?: (status: string) => void;
   onError?: (err: string) => void;
+
+  // optional debug
+  onRawChunk?: (chunk: string) => void;
 };
 
 export function useRoadmapStream() {
@@ -27,48 +30,6 @@ export function useRoadmapStream() {
     setIsStreaming(false);
   }, []);
 
-  // Extract multiple JSON objects from a glued string: "{}{}{}"
-  const extractJsonObjects = (input: string) => {
-    const out: string[] = [];
-    let depth = 0;
-    let inString = false;
-    let escape = false;
-    let start = -1;
-
-    for (let i = 0; i < input.length; i++) {
-      const ch = input[i];
-
-      if (inString) {
-        if (escape) {
-          escape = false;
-        } else if (ch === "\\") {
-          escape = true;
-        } else if (ch === '"') {
-          inString = false;
-        }
-        continue;
-      } else {
-        if (ch === '"') {
-          inString = true;
-          continue;
-        }
-      }
-
-      if (ch === "{") {
-        if (depth === 0) start = i;
-        depth++;
-      } else if (ch === "}") {
-        depth--;
-        if (depth === 0 && start !== -1) {
-          out.push(input.slice(start, i + 1));
-          start = -1;
-        }
-      }
-    }
-
-    return out;
-  };
-
   const startStream = useCallback(
     async (args: StreamArgs) => {
       if (isStreaming) return;
@@ -77,76 +38,35 @@ export function useRoadmapStream() {
       controllerRef.current = controller;
       setIsStreaming(true);
 
-      const emit = (parsed: any) => {
-        // normal event format: { event, data }
-        if (parsed?.event === "token" && typeof parsed?.data === "string") {
-          args.onToken(parsed.data);
-          return true;
-        }
-        if (parsed?.event === "status" && typeof parsed?.data === "string") {
-          args.onStatus?.(parsed.data);
-          return true;
-        }
-        if (parsed?.event === "error" && typeof parsed?.data === "string") {
-          args.onError?.(parsed.data);
-          return true;
+      const handleEventObj = (obj: any) => {
+        if (!obj) return;
+
+        if (obj.event === "status" && typeof obj.data === "string") {
+          args.onStatus?.(obj.data);
+          return;
         }
 
-        // roadmap created event: {"event":"roadmap_created","data":"uuid"}
-        if (
-          (parsed?.event === "roadmap_created" || parsed?.event === "roadmapId") &&
-          typeof parsed?.data === "string"
-        ) {
-          args.onRoadmapId?.(parsed.data);
-          return true;
+        if (obj.event === "token" && typeof obj.data === "string") {
+          // ✅ ONLY send the actual text
+          args.onToken(obj.data);
+          return;
         }
 
-        // alternative shapes
-        if (typeof parsed?.roadmapId === "string") {
-          args.onRoadmapId?.(parsed.roadmapId);
-          return true;
-        }
-        if (typeof parsed?.data?.roadmapId === "string") {
-          args.onRoadmapId?.(parsed.data.roadmapId);
-          return true;
+        if (obj.event === "error" && typeof obj.data === "string") {
+          args.onError?.(obj.data);
+          return;
         }
 
-        return false;
-      };
-
-      const handlePayload = (payload: string) => {
-        const text = payload.trim();
-        if (!text) return;
-
-        // ✅ Try: payload might contain multiple glued JSON objects
-        const jsons = extractJsonObjects(text);
-
-        if (jsons.length > 0) {
-          // If we successfully got JSON objects, emit them one by one.
-          let emittedAnything = false;
-
-          for (const j of jsons) {
-            try {
-              const parsed = JSON.parse(j);
-              const ok = emit(parsed);
-              emittedAnything = emittedAnything || ok;
-
-              // If it's NOT one of our stream events, it might be the actual roadmap JSON blob.
-              // In that case, pass it to onToken so the UI can summarize it.
-              if (!ok) {
-                args.onToken(j);
-                emittedAnything = true;
-              }
-            } catch {
-              // ignore
-            }
-          }
-
-          if (emittedAnything) return;
+        // roadmap created event shapes
+        if (obj.event === "roadmap_created" && typeof obj.data === "string") {
+          args.onRoadmapId?.(obj.data);
+          return;
         }
 
-        // ✅ If not JSON (or parsing failed), treat as plain text token
-        args.onToken(text);
+        if (typeof obj.roadmapId === "string") {
+          args.onRoadmapId?.(obj.roadmapId);
+          return;
+        }
       };
 
       try {
@@ -176,40 +96,41 @@ export function useRoadmapStream() {
           const { value, done } = await reader.read();
           if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
+          const chunk = decoder.decode(value, { stream: true });
+          args.onRawChunk?.(chunk);
 
-          // ✅ Handle BOTH normal SSE and your broken "data:" style
-          // If we see "data:" repeatedly, split by it.
-          if (buffer.includes("data:")) {
-            const parts = buffer.split("data:");
-            buffer = parts.pop() || ""; // keep incomplete tail
+          buffer += chunk;
 
-            for (const part of parts) {
-              handlePayload(part);
-            }
-            continue;
-          }
-
-          // Normal SSE fallback: split events by blank lines
+          // SSE events are separated by blank line
           while (buffer.includes("\n\n")) {
             const idx = buffer.indexOf("\n\n");
-            const rawEvent = buffer.slice(0, idx);
+            const eventBlock = buffer.slice(0, idx);
             buffer = buffer.slice(idx + 2);
 
-            // collect all data lines
-            const dataLines = rawEvent
+            // collect all data: lines
+            const dataLines = eventBlock
               .split("\n")
               .map((l) => l.trimEnd())
               .filter((l) => l.startsWith("data:"))
               .map((l) => l.replace(/^data:\s?/, ""));
 
-            if (dataLines.length) handlePayload(dataLines.join("\n"));
-            else handlePayload(rawEvent);
+            if (!dataLines.length) continue;
+
+            // sometimes backend sends one json per data line
+            for (const line of dataLines) {
+              const payload = line.trim();
+              if (!payload) continue;
+
+              try {
+                const obj = JSON.parse(payload);
+                handleEventObj(obj);
+              } catch {
+                // if backend ever sends plain text, treat as token
+                args.onToken(payload);
+              }
+            }
           }
         }
-
-        // flush leftover
-        if (buffer.trim()) handlePayload(buffer);
       } catch (e: any) {
         if (e?.name !== "AbortError") {
           args.onError?.(e?.message || "Stream error");
