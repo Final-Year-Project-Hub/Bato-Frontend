@@ -1,6 +1,14 @@
 "use client";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const data = [
   { month: "Jan", revenue: 4200, costs: 1200 },
@@ -25,9 +33,20 @@ export default function RevenueChart() {
             borderRadius: "8px",
           }}
         />
-        <Legend />
-        <Line type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} name="Revenue" />
-        <Line type="monotone" dataKey="costs" stroke="#f97316" strokeWidth={2} name="Costs" />
+        <Line
+          type="monotone"
+          dataKey="revenue"
+          stroke="#8b5cf6"
+          strokeWidth={2}
+          name="Revenue"
+        />
+        <Line
+          type="monotone"
+          dataKey="costs"
+          stroke="#f97316"
+          strokeWidth={2}
+          name="Costs"
+        />
       </LineChart>
     </ResponsiveContainer>
   );
