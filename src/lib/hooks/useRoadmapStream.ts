@@ -59,24 +59,56 @@ export function useRoadmapStream() {
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder("utf-8");
+
         let buffer = "";
 
-        const handleData = (dataStr: string) => {
-          const s = dataStr.trim();
-          if (!s) return;
+        // ✅ same helper style as your working roadmapService
+        const extractJsonObjects = (input: string): string[] => {
+          const objects: string[] = [];
+          let depth = 0;
+          let startIndex = 0;
+          let inString = false;
+          let escape = false;
 
-          // If server sometimes sends multiple JSON objects stuck together:
-          // data: {...}\ndata: {...}
-          // we already join them below, but just in case:
-          const lines = s.split("\n").map((x) => x.trim()).filter(Boolean);
+          for (let i = 0; i < input.length; i++) {
+            const char = input[i];
 
-          for (const line of lines) {
-            const cleaned = line.startsWith("data:")
-              ? line.replace(/^data:\s?/, "")
-              : line;
+            if (escape) {
+              escape = false;
+              continue;
+            }
+            if (char === "\\") {
+              escape = true;
+              continue;
+            }
+            if (char === '"') {
+              inString = !inString;
+            }
 
+            if (!inString) {
+              if (char === "{") {
+                if (depth === 0) startIndex = i;
+                depth++;
+              } else if (char === "}") {
+                depth--;
+                if (depth === 0) {
+                  objects.push(input.substring(startIndex, i + 1));
+                }
+              }
+            }
+          }
+
+          if (objects.length === 0 && input.trim()) return [input];
+          return objects;
+        };
+
+        const handleJsonPayload = (jsonStr: string) => {
+          // jsonStr may contain one JSON or multiple concatenated JSONs
+          const objs = extractJsonObjects(jsonStr);
+
+          for (const obj of objs) {
             try {
-              const parsed = JSON.parse(cleaned);
+              const parsed = JSON.parse(obj);
 
               if (parsed?.event === "status" && typeof parsed.data === "string") {
                 args.onStatus?.(parsed.data);
@@ -84,7 +116,6 @@ export function useRoadmapStream() {
               }
 
               if (parsed?.event === "token" && typeof parsed.data === "string") {
-                // ✅ IMPORTANT: pass ONLY the token text
                 args.onToken(parsed.data);
                 continue;
               }
@@ -102,7 +133,7 @@ export function useRoadmapStream() {
                 continue;
               }
             } catch {
-              // not JSON → ignore
+              // ignore bad JSON object
             }
           }
         };
@@ -111,32 +142,36 @@ export function useRoadmapStream() {
           const { value, done } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
+          // ✅ normalize CRLF like the other fix
+          const chunk = decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
           args.onRawChunk?.(chunk);
 
           buffer += chunk;
 
-          // SSE events separated by blank line
-          while (buffer.includes("\n\n")) {
-            const idx = buffer.indexOf("\n\n");
-            const eventBlock = buffer.slice(0, idx);
-            buffer = buffer.slice(idx + 2);
+          // ✅ parse line-by-line like your working roadmapService
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
 
-            // collect all data: lines
-            const dataLines = eventBlock
-              .split("\n")
-              .map((l) => l.trimEnd())
-              .filter((l) => l.startsWith("data:"))
-              .map((l) => l.replace(/^data:\s?/, ""));
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            if (!trimmed.startsWith("data:")) continue;
 
-            if (dataLines.length) {
-              handleData(dataLines.join("\n"));
-            }
+            const jsonStr = trimmed.replace(/^data:\s?/, "");
+            if (!jsonStr) continue;
+
+            handleJsonPayload(jsonStr);
           }
         }
 
-        // flush tail
-        if (buffer.trim()) handleData(buffer);
+        // ✅ final buffer flush (same style)
+        const tail = buffer.trim();
+        if (tail && tail.startsWith("data:")) {
+          const jsonStr = tail.replace(/^data:\s?/, "");
+          if (jsonStr) handleJsonPayload(jsonStr);
+        }
+
+        reader.releaseLock();
       } catch (e: any) {
         if (e?.name !== "AbortError") {
           args.onError?.(e?.message || "Stream error");
