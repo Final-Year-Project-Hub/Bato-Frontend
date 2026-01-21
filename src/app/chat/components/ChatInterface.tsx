@@ -23,6 +23,7 @@ type ChatMsg = {
   role: "user" | "assistant";
   content: string;
   createdAt?: number;
+  roadmapId?: string;
 };
 
 const TITLES = [
@@ -49,12 +50,15 @@ export default function ChatInterface() {
 
   const [chatId, setChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
+    null,
+  );
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
 
   const titleIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [typedLength, setTypedLength] = useState(0);
-
   const roadmapBufRef = useRef("");
   const roadmapModeRef = useRef(false);
 
@@ -85,9 +89,20 @@ export default function ChatInterface() {
     };
   }, [fullText]);
 
+  // Auto-scroll effect - smooth scroll during streaming
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, loading]);
+    if (bottomRef.current && chatContainerRef.current) {
+      const container = chatContainerRef.current;
+      const isNearBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight <
+        150;
+
+      // Auto-scroll if streaming/loading or user is near bottom
+      if (loading || isStreaming || isNearBottom) {
+        bottomRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [messages, loading, isStreaming]);
 
   const params = useParams<{ chatId?: string }>();
 
@@ -95,7 +110,7 @@ export default function ChatInterface() {
     const idFromRoute = params?.chatId;
     if (!idFromRoute || typeof idFromRoute !== "string") return;
 
-    // don’t overwrite UI while you’re streaming a reply
+    // don't overwrite UI while you're streaming a reply
     if (isStreaming || loading) return;
 
     let cancelled = false;
@@ -117,6 +132,7 @@ export default function ChatInterface() {
               id: m.id,
               role: m.role,
               content: displayContent,
+              roadmapId: m.roadmapId,
               createdAt: m.createdAt
                 ? new Date(m.createdAt).getTime()
                 : undefined,
@@ -135,7 +151,7 @@ export default function ChatInterface() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params?.chatId]); // ✅ only run when route chatId changes
+  }, [params?.chatId]);
 
   const uid = () =>
     typeof crypto !== "undefined"
@@ -143,28 +159,106 @@ export default function ChatInterface() {
       : String(Date.now() + Math.random());
 
   const formatRoadmapTitles = (raw: string) => {
-    const cleaned = raw.replace(/```json|```/g, "");
+    const cleaned = (raw || "").replace(/```json|```/g, "");
 
-    const goal = cleaned.match(/"goal"\s*:\s*"([^"]+)"/)?.[1] ?? "…";
+    const safeMatch = (re: RegExp) => cleaned.match(re)?.[1];
 
-    const phaseTitles = [...cleaned.matchAll(/"title"\s*:\s*"([^"]+)"/g)]
-      .map((m) => m[1])
-      .filter((t) => /^Phase\s*\d+\s*:/i.test(t));
+    const goal = safeMatch(/"goal"\s*:\s*"([^"]*)"/);
+    const intent = safeMatch(/"intent"\s*:\s*"([^"]*)"/);
+    const prof = safeMatch(/"proficiency"\s*:\s*"([^"]*)"/);
+    const total = safeMatch(/"total_estimated_hours"\s*:\s*([0-9.]+)/);
 
     const lines: string[] = [];
-    lines.push(`Roadmap: ${goal}`);
-    lines.push("");
 
-    if (phaseTitles.length === 0) {
-      lines.push("Generating phases...");
-      return lines.join("\n");
+    // Header (shows as soon as fields exist)
+    if (goal) lines.push(`Roadmap: ${goal}`);
+    if (intent || prof || total) {
+      lines.push(
+        [
+          intent ? `${intent}` : null,
+          prof ? `${prof}` : null,
+          total ? `${total} hrs` : null,
+        ]
+          .filter(Boolean)
+          .join("  |  "),
+      );
+    }
+    if (lines.length) lines.push("");
+
+    // --- PHASES ---
+    const phaseTitleRe = /"title"\s*:\s*"(Phase\s*\d+\s*:[^"]*)"/g;
+
+    const phaseStarts: Array<{ idx: number; title: string }> = [];
+    for (const m of cleaned.matchAll(phaseTitleRe)) {
+      if (typeof m.index === "number")
+        phaseStarts.push({ idx: m.index, title: m[1] });
     }
 
-    for (const pt of phaseTitles) {
-      const num = pt.match(/^Phase\s*(\d+)/i)?.[1] ?? "";
-      const name = pt.replace(/^Phase\s*\d+\s*:\s*/i, "").trim();
-      lines.push(`Phase ${num}: ${name}`);
+    if (phaseStarts.length === 0) {
+      if (!lines.length) return "Generating roadmap...";
+      return lines.join("\n").trimEnd();
+    }
+
+    const getSlice = (start: number, end?: number) =>
+      cleaned.slice(start, end ?? cleaned.length);
+
+    for (let i = 0; i < phaseStarts.length; i++) {
+      const start = phaseStarts[i].idx;
+      const end = phaseStarts[i + 1]?.idx; // until next phase begins
+      const block = getSlice(start, end);
+
+      const title = phaseStarts[i].title;
+
+      const pDesc = block.match(/"description"\s*:\s*"([^"]*)"/)?.[1];
+      const pHrs = block.match(/"estimated_hours"\s*:\s*([0-9.]+)/)?.[1];
+
+      lines.push(`## ${title}${pHrs ? ` (${pHrs} hrs)` : ""}`);
+      if (pDesc) lines.push(pDesc);
       lines.push("");
+
+      // --- TOPICS inside this phase ---
+      const topicRe =
+        /"topics"\s*:\s*\[[\s\S]*?\{\s*"title"\s*:\s*"([^"]+)"[\s\S]*?"description"\s*:\s*"([^"]*)"(?:[\s\S]*?"estimated_hours"\s*:\s*([0-9.]+))?(?:[\s\S]*?"doc_link"\s*:\s*"([^"]*)")?/g;
+
+      const topicMatches = [...block.matchAll(topicRe)];
+
+      for (const tm of topicMatches) {
+        const tTitle = tm[1];
+        const tDesc = tm[2];
+        const tHrs = tm[3];
+        const tLink = tm[4];
+
+        // skip if this is actually another phase title accidentally
+        if (/^Phase\s*\d+\s*:/i.test(tTitle)) continue;
+
+        lines.push(`- **${tTitle}**${tHrs ? ` (${tHrs} hrs)` : ""}`);
+        if (tDesc) lines.push(`  ${tDesc}`);
+        if (tLink) lines.push(`  ${tLink}`);
+
+        // --- SUBTOPICS inside this topic ---
+        const afterTitleIdx = block.indexOf(`"title": "${tTitle}"`);
+        const topicWindow =
+          afterTitleIdx >= 0
+            ? block.slice(afterTitleIdx, afterTitleIdx + 2000)
+            : "";
+
+        const subRe =
+          /"subtopics"\s*:\s*\[[\s\S]*?\{\s*"title"\s*:\s*"([^"]+)"[\s\S]*?"description"\s*:\s*"([^"]*)"(?:[\s\S]*?"estimated_hours"\s*:\s*([0-9.]+))?(?:[\s\S]*?"doc_link"\s*:\s*"([^"]*)")?/g;
+
+        const subMatches = [...topicWindow.matchAll(subRe)];
+        for (const sm of subMatches) {
+          const sTitle = sm[1];
+          const sDesc = sm[2];
+          const sHrs = sm[3];
+          const sLink = sm[4];
+
+          lines.push(`  - ${sTitle}${sHrs ? ` (${sHrs} hrs)` : ""}`);
+          if (sDesc) lines.push(`    ${sDesc}`);
+          if (sLink) lines.push(`    ${sLink}`);
+        }
+
+        lines.push("");
+      }
     }
 
     return lines.join("\n").trimEnd();
@@ -193,6 +287,7 @@ export default function ChatInterface() {
 
     const thinkingId = uid();
     const userTempId = uid();
+    const hasAnyTokenRef = { current: false };
 
     const optimisticUser: ChatMsg = {
       id: userTempId,
@@ -206,6 +301,8 @@ export default function ChatInterface() {
       optimisticUser,
       { id: thinkingId, role: "assistant", content: "", createdAt: Date.now() },
     ]);
+
+    setStreamingMessageId(thinkingId);
 
     const nextHistory = [...messages, optimisticUser].map((m) => ({
       role: m.role,
@@ -234,18 +331,39 @@ export default function ChatInterface() {
 
       let roadmapId: string | undefined;
       let assistantText = "";
+      let rawStreamText = "";
 
       await startStream({
         message: text,
         chatSessionId: currentChatId,
         conversation_history: nextHistory,
-        strictMode: false,
-
+        strictMode: true,
         onRoadmapId: (id) => {
           roadmapId = id;
+
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === thinkingId ? { ...m, roadmapId: id } : m,
+            ),
+          );
+        },
+
+        onStatus: (s) => {
+          // show status only if no tokens yet
+          if (!hasAnyTokenRef.current) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === thinkingId ? { ...m, content: `${s}` } : m,
+              ),
+            );
+          }
         },
 
         onToken: (t) => {
+          hasAnyTokenRef.current = true;
+
+          rawStreamText += t;
+
           if (!roadmapModeRef.current) {
             const hint = t.trim();
             if (
@@ -260,7 +378,6 @@ export default function ChatInterface() {
           if (roadmapModeRef.current) {
             roadmapBufRef.current += t;
             const live = formatRoadmapTitles(roadmapBufRef.current);
-
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === thinkingId ? { ...m, content: live } : m,
@@ -284,15 +401,14 @@ export default function ChatInterface() {
         },
       });
 
-      const finalStored =
-        roadmapModeRef.current && roadmapBufRef.current.trim()
-          ? roadmapBufRef.current
-          : assistantText;
+      const finalRaw = rawStreamText.trim();
 
-      if (finalStored.trim()) {
+      const toSave = finalRaw;
+
+      if (toSave) {
         await addMessage(currentChatId, {
           role: "assistant",
-          content: finalStored,
+          content: toSave,
           roadmapId,
         });
       } else {
@@ -312,6 +428,7 @@ export default function ChatInterface() {
       );
     } finally {
       setLoading(false);
+      setStreamingMessageId(null);
     }
   };
 
@@ -341,7 +458,7 @@ export default function ChatInterface() {
   return (
     <main className="h-screen flex-1 relative flex flex-col bg-grey p-4 sm:p-6">
       {/* Top Right Menu */}
-      <div className="absolute top-4 right-6 z-20 flex items-center">
+      <div className="absolute top-4 right-6 z-20 flex items-center gap-2">
         <div
           className={`w-2 h-2 rounded-full ${
             healthStatus === "connected"
@@ -362,7 +479,7 @@ export default function ChatInterface() {
         </button>
 
         {openMenu && (
-          <div className="absolute right-0 mt-3 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
+          <div className="absolute right-0 top-8 mt-3 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
             <button
               onClick={() => router.push("./dashboard")}
               className="w-full px-4 py-2 flex gap-2 text-sm text-white/80 hover:bg-white/5"
@@ -400,10 +517,19 @@ export default function ChatInterface() {
         </div>
       ) : (
         <>
-          <div className="flex-1 overflow-y-auto pr-2 pt-10">
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto pr-2 pt-10"
+          >
             <div className="max-w-3xl mx-auto space-y-3">
               {messages.map((m) => (
-                <ChatBubble key={m.id} role={m.role} content={m.content} />
+                <ChatBubble
+                  key={m.id}
+                  role={m.role}
+                  content={m.content}
+                  roadmapId={m.roadmapId}
+                  isStreaming={m.id === streamingMessageId}
+                />
               ))}
               <div ref={bottomRef} />
             </div>
@@ -444,21 +570,191 @@ export default function ChatInterface() {
 function ChatBubble({
   role,
   content,
+  roadmapId,
+  isStreaming = false,
 }: {
   role: "user" | "assistant";
   content: string;
+  roadmapId?: string;
+  isStreaming?: boolean;
 }) {
+  const router = useRouter();
+
   const isUser = role === "user";
+
+  // Check if content is a roadmap
+  const isRoadmap =
+    content.includes("Roadmap:") || content.includes("## Phase");
+
+  // Parse roadmap into structured data
+  const parseRoadmap = (text: string) => {
+    const lines = text.split("\n");
+    let goal = "";
+    let metadata = "";
+    const phases: Array<{
+      title: string;
+      description: string;
+      hours: string;
+      topics: Array<{ text: string; isSubtopic: boolean }>;
+    }> = [];
+
+    let currentPhase: any = null;
+
+    for (const line of lines) {
+      if (line.startsWith("Roadmap:")) {
+        goal = line.replace("Roadmap:", "").trim();
+      } else if (line.includes("|")) {
+        metadata = line;
+      } else if (line.startsWith("## Phase")) {
+        if (currentPhase) phases.push(currentPhase);
+        const match = line.match(/## (Phase.*?)(?:\s*\(([^)]+)\))?$/);
+        currentPhase = {
+          title: match?.[1]?.trim() || line.replace("## ", ""),
+          hours: match?.[2] || "",
+          description: "",
+          topics: [],
+        };
+      } else if (currentPhase) {
+        if (line.startsWith("- **") || line.startsWith("- ")) {
+          currentPhase.topics.push({ text: line, isSubtopic: false });
+        } else if (line.startsWith("  - ")) {
+          currentPhase.topics.push({ text: line, isSubtopic: true });
+        } else if (
+          line.trim() &&
+          !currentPhase.description &&
+          !line.startsWith("  ")
+        ) {
+          currentPhase.description = line.trim();
+        }
+      }
+    }
+
+    if (currentPhase) phases.push(currentPhase);
+
+    return { goal, metadata, phases };
+  };
+
+  // Beautiful roadmap rendering (only when streaming is complete)
+  const renderBeautifulRoadmap = (text: string, roadmapId?: string) => {
+    const { goal, metadata, phases } = parseRoadmap(text);
+
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        {goal && (
+          <div className="bg-gradient-to-r from-[#E96559]/20 to-transparent p-4 rounded-lg border-l-4 border-[#E96559]">
+            <h2 className="text-xl font-bold text-white mb-2">{goal}</h2>
+            {metadata && <p className="text-sm text-white/70">{metadata}</p>}
+          </div>
+        )}
+
+        {/* Phases */}
+        <div className="space-y-4">
+          {phases.map((phase, idx) => (
+            <div
+              key={idx}
+              className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-[#E96559]/50 transition-colors"
+            >
+              {/* Phase Header */}
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="text-lg font-bold text-[#E96559]">
+                  {phase.title}
+                </h3>
+                {phase.hours && (
+                  <span className="text-xs bg-[#E96559]/20 text-[#E96559] px-2 py-1 rounded-full">
+                    {phase.hours}
+                  </span>
+                )}
+              </div>
+
+              {/* Phase Description */}
+              {phase.description && (
+                <p className="text-sm text-white/80 mb-3">
+                  {phase.description}
+                </p>
+              )}
+
+              {/* Topics */}
+              {phase.topics.length > 0 && (
+                <div className="space-y-2 ml-2">
+                  {phase.topics.map((topic, topicIdx) => (
+                    <div
+                      key={topicIdx}
+                      className={`text-sm ${
+                        topic.isSubtopic
+                          ? "ml-6 text-white/60 pl-3 border-l-2 border-white/20"
+                          : "text-white/80"
+                      }`}
+                    >
+                      {topic.text
+                        .replace(/^-\s*\*\*/, "•  ")
+                        .replace(/\*\*/g, "")}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* CTA BUTTON */}
+        <div className="pt-4 flex justify-end">
+          <button
+            onClick={() => router.push(`/dashboard/roadmap/${roadmapId}`)}
+            className="bg-[#E96559] hover:bg-[#E96559]/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition"
+          >
+            View Full Roadmap →
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Simple format for streaming (real-time updates)
+  const formatContentSimple = (text: string) => {
+    const lines = text.split("\n");
+    return lines.map((line, idx) => {
+      if (line.startsWith("Roadmap:")) {
+        return (
+          <div key={idx} className="text-lg font-bold mb-2">
+            {line}
+          </div>
+        );
+      } else if (line.startsWith("## Phase")) {
+        return (
+          <div key={idx} className="text-base font-bold mt-4 mb-2">
+            {line.replace("## ", "")}
+          </div>
+        );
+      } else if (line.trim()) {
+        return (
+          <div key={idx} className="text-sm">
+            {line}
+          </div>
+        );
+      }
+      return <div key={idx} className="h-2" />;
+    });
+  };
+
   return (
     <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed border ${
+        className={`rounded-2xl px-4 py-3 leading-relaxed border ${
           isUser
-            ? "bg-[#E96559] text-foreground border-white/10"
-            : "bg-[#2A2A2A] text-white border-white/10"
+            ? "max-w-[80%] bg-[#E96559] text-foreground border-white/10"
+            : isRoadmap && !isStreaming
+              ? "w-full bg-[#2A2A2A] text-white border-white/10"
+              : "max-w-[80%] bg-[#2A2A2A] text-white border-white/10"
         }`}
       >
-        {content}
+        {isUser ? (
+          <div className="text-sm whitespace-pre-wrap">{content}</div>
+        ) : isRoadmap && !isStreaming ? (
+          renderBeautifulRoadmap(content, roadmapId)
+        ) : (
+          formatContentSimple(content)
+        )}
       </div>
     </div>
   );
