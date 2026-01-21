@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
+import { toast } from "sonner";
 
 import { OtpDialog } from "@/components/auth/OtpDialog";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,8 @@ export default function SignupForm() {
   const [otpEmail, setOtpEmail] = useState("");
 
   const onSubmit = async (data: SignupFormValues) => {
+    const toastId = toast.loading("Creating your account...");
+
     try {
       const payload = {
         fullName: data.fullName,
@@ -45,25 +48,39 @@ export default function SignupForm() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      console.log(result);
+
       const shouldOpenOtp =
         result?.success === true &&
         typeof result?.data?.id === "string" &&
         typeof result?.data?.email === "string";
 
       if (shouldOpenOtp) {
+        toast.success("Account created ", {
+          id: toastId,
+          description: "OTP sent to your email",
+        });
+
         setOtpEmail(result.data.email);
         setOtpUserId(result.data.id);
         setOtpOpen(true);
         return;
       }
 
+      toast.error(result?.message || "Signup failed ❌", {
+        id: toastId,
+      });
     } catch (error) {
+      toast.error("Signup error ", {
+        id: toastId,
+        description: "Please try again later",
+      });
       console.error("Signup Error:", error);
     }
   };
 
   const handleVerifyOtp = async (otp: string) => {
+    const toastId = toast.loading("Verifying OTP...");
+
     try {
       const res = await apiFetch("/auth/verifyOtp", {
         method: "POST",
@@ -74,19 +91,34 @@ export default function SignupForm() {
           purpose: "EMAIL_VERIFICATION",
         }),
       });
-      console.log(res);
+
       if (res.success) {
+        toast.success("Email verified ✅", {
+          id: toastId,
+          description: "You can now login to your account",
+        });
+
         setOtpOpen(false);
-        router.push("/login");
+
+        setTimeout(() => {
+          router.push("/login");
+        }, 800);
       } else {
-        console.log(res.message);
+        toast.error(res.message || "Invalid OTP ❌", {
+          id: toastId,
+        });
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      toast.error("OTP verification failed ⚠️", {
+        id: toastId,
+      });
+      console.error(error);
     }
   };
 
   const handleResendOtp = async () => {
+    const toastId = toast.loading("Resending OTP...");
+
     try {
       const res = await apiFetch("/auth/resendOtp", {
         method: "POST",
@@ -97,10 +129,15 @@ export default function SignupForm() {
         }),
       });
 
-      console.log(res.message); // toast.success(res.message)
-    } catch (e) {
-      console.error("Resend OTP error:", e);
-      // toast.error(...)
+      toast.success("OTP resent 📩", {
+        id: toastId,
+        description: res.message,
+      });
+    } catch (error) {
+      toast.error("Failed to resend OTP ❌", {
+        id: toastId,
+      });
+      console.error("Resend OTP error:", error);
     }
   };
 
@@ -123,7 +160,7 @@ export default function SignupForm() {
         }}
       />
 
-      {/* LOGO — FIXED TOP RIGHT */}
+      {/* LOGO */}
       <div className="absolute top-7 right-10 z-50">
         <Logo />
       </div>
@@ -131,23 +168,14 @@ export default function SignupForm() {
       {/* CENTER */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
         <Card
-          className="
-            w-full
-            max-w-118.75
-            min-h-168.75
-            px-8 py-8
-            rounded-2xl
-            text-white
-            border border-white/10
-            flex flex-col justify-between
-          "
+          className="w-full max-w-118.75 min-h-168.75 px-8 py-8 rounded-2xl text-white border border-white/10 flex flex-col justify-between"
           style={{
             backgroundColor: "#233845",
             backdropFilter: "blur(14px)",
             boxShadow: "0 25px 70px rgba(0,0,0,0.65)",
           }}
         >
-          {/* TOP */}
+          {/* FORM */}
           <div>
             <div className="mb-3 text-center">
               <h2 className="text-xl font-semibold text-[#EC5D44]">
@@ -162,14 +190,14 @@ export default function SignupForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* FULL NAME */}
               <div className="relative">
-                <label className="text-sm text-[#dbeafe] ">Full Name</label>
+                <label className="text-sm text-[#dbeafe]">Full Name</label>
                 <Input
                   {...register("fullName")}
                   placeholder="John Doe"
-                  className="h-10 mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                  className="h-10 mt-1 bg-white/10 border-white/20 text-white"
                 />
                 {errors.fullName && (
-                  <span className="absolute -bottom-4 left-0 text-xs text-red-400">
+                  <span className="absolute -bottom-4 text-xs text-red-400">
                     {errors.fullName.message}
                   </span>
                 )}
@@ -181,10 +209,10 @@ export default function SignupForm() {
                 <Input
                   {...register("email")}
                   placeholder="m@example.com"
-                  className="h-10 mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                  className="h-10 mt-1 bg-white/10 border-white/20 text-white"
                 />
                 {errors.email && (
-                  <span className="absolute -bottom-4 left-0 text-xs text-red-400">
+                  <span className="absolute -bottom-4 text-xs text-red-400">
                     {errors.email.message}
                   </span>
                 )}
@@ -206,7 +234,7 @@ export default function SignupForm() {
                   {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
                 {errors.password && (
-                  <span className="absolute -bottom-4 left-0 text-xs text-red-400">
+                  <span className="absolute -bottom-4 text-xs text-red-400">
                     {errors.password.message}
                   </span>
                 )}
@@ -214,7 +242,7 @@ export default function SignupForm() {
 
               {/* CONFIRM PASSWORD */}
               <div className="relative">
-                <label className="text-sm text-[#dbeafe] ">
+                <label className="text-sm text-[#dbeafe]">
                   Confirm Password
                 </label>
                 <Input
@@ -230,7 +258,7 @@ export default function SignupForm() {
                   {showConfirm ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
                 {errors.confirmPassword && (
-                  <span className="absolute -bottom-4 left-0 text-xs text-red-400">
+                  <span className="absolute -bottom-4 text-xs text-red-400">
                     {errors.confirmPassword.message}
                   </span>
                 )}
@@ -241,24 +269,23 @@ export default function SignupForm() {
                 disabled={isSubmitting}
                 className="w-full bg-[#EC5D44] hover:bg-[#EC5D44]/90 mt-6"
               >
-                Sign Up
+                {isSubmitting ? "Creating account..." : "Sign Up"}
               </Button>
             </form>
           </div>
 
-          {/* BOTTOM */}
+          {/* SOCIAL */}
           <div className="space-y-4">
             <div className="flex items-center">
               <span className="h-px flex-1 bg-white/20" />
-              <span className="px-3 py-1 text-xs text-[#45556C] font-semibold bg-white rounded-full">
+              <span className="px-3 py-1 text-xs bg-white rounded-full text-[#45556C] font-semibold">
                 OR CONTINUE WITH
               </span>
               <span className="h-px flex-1 bg-white/20" />
             </div>
 
             <Button className="w-full h-10 bg-white/10 text-white hover:bg-white/20 flex items-center justify-center gap-3">
-              <FcGoogle size={18} />
-              Google
+              <FcGoogle size={18} /> Google
             </Button>
 
             <p className="text-center text-sm text-[#A1A1AA]">
