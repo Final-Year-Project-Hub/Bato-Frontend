@@ -14,7 +14,7 @@ export default function SettingsView() {
       <div className="w-full px-10 py-8 space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold -mt-2.5">Settings</h1>
+        <h1 className="text-2xl font-semibold -mt-1.5">Settings</h1>
         <p className="text-md font-medium text-muted-foreground mt-1">
           Update your profile and manage account security
         </p>

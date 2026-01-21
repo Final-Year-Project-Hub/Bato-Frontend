@@ -56,7 +56,7 @@ export default function RoadmapsPage() {
           transition={{ duration: 0.4 }}
           className="mb-6 flex items-center justify-between"
         >
-          <div>
+          <div className="ml-5">
             <h2 className="text-2xl font-bold text-primary">
               All Roadmaps
             </h2>

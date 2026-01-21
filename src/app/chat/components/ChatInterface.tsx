@@ -10,6 +10,9 @@ import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { useHealth } from "@/lib/hooks/useHealth";
 import { useChat } from "@/lib/hooks/useChat";
 import { useRoadmapStream } from "@/lib/hooks/useRoadmapStream";
+import { toast } from "sonner";
+import { apiFetch } from "@/lib/api"; 
+
 
 type ChatMsg = {
   id: string;
@@ -58,7 +61,47 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
     const { normal, highlight } = TITLES[safeIndex];
     return { fullText: normal + highlight, normalLength: normal.length };
   }, [currentTitleIndex]);
+  
+// logout function
+    const handleLogout = async () => {
+    const toastId = toast.loading("Logging out...");
 
+    try {
+      const res = await apiFetch("/auth/logout", {
+        method: "POST",
+      });
+
+      if (res.success) {
+        toast.success("Logged out successfully ", {
+          id: toastId,
+          duration: 2000,
+        });
+
+        await auth.refresh();
+
+        setShowLogout(false);
+        setOpenMenu(false);
+
+        setTimeout(() => {
+          router.push("/login");
+        }, 500);
+      } else {
+        toast.error(res.message || "Logout failed ", {
+          id: toastId,
+        });
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      
+      await auth.refresh();
+      setShowLogout(false);
+      setOpenMenu(false);
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 500);
+    }
+  };
   useEffect(() => {
     if (titleIntervalRef.current) clearInterval(titleIntervalRef.current);
     setTypedLength(0);
@@ -222,13 +265,18 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
           ),
         );
       }
-    } catch (e: any) {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === thinkingId ? { ...m, content: e?.message || "Error" } : m)),
-      );
-    } finally {
-      setLoading(false);
-    }
+     } catch (e: unknown) {
+  const message =
+    e instanceof Error ? e.message : "Something went wrong";
+
+  setMessages((prev) =>
+    prev.map((m) =>
+      m.id === thinkingId ? { ...m, content: message } : m
+    )
+  );
+} finally {
+  setLoading(false);
+}
   };
 
   const typedText = fullText.slice(0, typedLength);
@@ -278,7 +326,7 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
         </button>
 
         {openMenu && (
-          <div className="absolute right-0 mt-3 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
+          <div className="absolute right-0 mt-12 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
             <button
               onClick={() => router.push("./dashboard")}
               className="w-full px-4 py-2 flex gap-2 text-sm text-white/80 hover:bg-white/5"
@@ -323,7 +371,12 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
         </>
       )}
 
-      <LogoutModal open={showLogout} onClose={() => setShowLogout(false)} onConfirm={() => {}} />
+      {/* <LogoutModal open={showLogout} onClose={() => setShowLogout(false)} onConfirm={() => {}} /> */}
+        <LogoutModal 
+        open={showLogout} 
+        onClose={() => setShowLogout(false)} 
+        onConfirm={handleLogout}  
+      />
 
       <style jsx>{`
         @keyframes blink {

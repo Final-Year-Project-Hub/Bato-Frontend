@@ -41,7 +41,7 @@ export default function LoginForm() {
       });
 
       if (res.success) {
-        toast.success("Login successful 🚀", {
+        toast.success("Login successful ", {
           id: toastId,
           description: "Welcome back to bato.ai",
           duration: 2500,
@@ -58,7 +58,7 @@ export default function LoginForm() {
         });
       }
     } catch (error) {
-      toast.error("Server error ⚠️", {
+      toast.error("Server error ", {
         id: toastId,
         description: "Please try again later",
       });
