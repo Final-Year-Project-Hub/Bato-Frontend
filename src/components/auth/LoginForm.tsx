@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
+import { toast } from "sonner";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -28,6 +29,8 @@ export default function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
+    const toastId = toast.loading("Signing you in...");
+
     try {
       const res = await apiFetch("/auth/login", {
         method: "POST",
@@ -38,13 +41,29 @@ export default function LoginForm() {
       });
 
       if (res.success) {
+        toast.success("Login successful 🚀", {
+          id: toastId,
+          description: "Welcome back to bato.ai",
+          duration: 2500,
+        });
+
         await refresh();
-        router.push("/chat");
+
+        setTimeout(() => {
+          router.push("/chat");
+        }, 800);
       } else {
-        console.log(res.message);
+        toast.error(res.message || "Invalid email or password ❌", {
+          id: toastId,
+        });
       }
-    } catch (e: any) {
-      console.error("Login error:", e.message);
+    } catch (error) {
+      toast.error("Server error ⚠️", {
+        id: toastId,
+        description: "Please try again later",
+      });
+
+      console.error("Login error:", error);
     }
   };
 
@@ -55,7 +74,7 @@ export default function LoginForm() {
         <Logo />
       </div>
 
-      {/* MAIN WRAPPER — CENTERED & RESPONSIVE */}
+      {/* MAIN WRAPPER */}
       <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row">
         {/* LEFT IMAGE */}
         <div
@@ -73,7 +92,7 @@ export default function LoginForm() {
               boxShadow: "0 25px 70px rgba(0,0,0,0.65)",
             }}
           >
-            {/* FORM HEADER */}
+            {/* HEADER */}
             <div className="text-center mb-6">
               <h2 className="text-2xl font-semibold text-[#EC5D44]">
                 Welcome back!!!
@@ -83,7 +102,7 @@ export default function LoginForm() {
               </p>
             </div>
 
-            {/* LOGIN FORM */}
+            {/* FORM */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label className="text-sm text-[#dbeafe]">Email</label>
@@ -132,11 +151,11 @@ export default function LoginForm() {
                 disabled={isSubmitting}
                 className="w-full bg-[#EC5D44] hover:bg-[#EC5D44]/90 mt-3"
               >
-                Sign In
+                {isSubmitting ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
-            {/* SOCIAL LOGIN */}
+            {/* SOCIAL */}
             <div className="mt-4">
               <div className="flex items-center">
                 <span className="flex-1 h-px bg-white/20" />
