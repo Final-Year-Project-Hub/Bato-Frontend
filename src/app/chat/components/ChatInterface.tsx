@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ArrowUp, User, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
+import {
+  ArrowUp,
+  User,
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -10,6 +16,7 @@ import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { useHealth } from "@/lib/hooks/useHealth";
 import { useChat } from "@/lib/hooks/useChat";
 import { useRoadmapStream } from "@/lib/hooks/useRoadmapStream";
+import { useParams } from "next/navigation";
 
 type ChatMsg = {
   id: string;
@@ -25,15 +32,13 @@ const TITLES = [
   { normal: "Level Up Your ", highlight: "Skills Today!!" },
 ];
 
-interface ChatInterfaceProps {
-  currentTitleIndex?: number;
-}
+export default function ChatInterface() {
+  const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
 
-export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfaceProps) {
   const router = useRouter();
   const auth = useAuth();
   const { status: healthStatus } = useHealth();
-  const { startChat, addMessage } = useChat();
+  const { startChat, addMessage, getMessages } = useChat();
   const { startStream, isStreaming } = useRoadmapStream();
 
   const [openMenu, setOpenMenu] = useState(false);
@@ -54,7 +59,10 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
   const roadmapModeRef = useRef(false);
 
   const { fullText, normalLength } = useMemo(() => {
-    const safeIndex = currentTitleIndex >= 0 && currentTitleIndex < TITLES.length ? currentTitleIndex : 0;
+    const safeIndex =
+      currentTitleIndex >= 0 && currentTitleIndex < TITLES.length
+        ? currentTitleIndex
+        : 0;
     const { normal, highlight } = TITLES[safeIndex];
     return { fullText: normal + highlight, normalLength: normal.length };
   }, [currentTitleIndex]);
@@ -81,8 +89,58 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, loading]);
 
+  const params = useParams<{ chatId?: string }>();
+
+  useEffect(() => {
+    const idFromRoute = params?.chatId;
+    if (!idFromRoute || typeof idFromRoute !== "string") return;
+
+    // don’t overwrite UI while you’re streaming a reply
+    if (isStreaming || loading) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await getMessages(idFromRoute);
+        if (cancelled) return;
+
+        if (res?.success && Array.isArray(res.data)) {
+          const mapped: ChatMsg[] = res.data.map((m: any) => {
+            const rawContent = m.content ?? "";
+            const displayContent =
+              m.role === "assistant" && looksLikeRoadmapJson(rawContent)
+                ? formatRoadmapTitles(rawContent)
+                : rawContent;
+
+            return {
+              id: m.id,
+              role: m.role,
+              content: displayContent,
+              createdAt: m.createdAt
+                ? new Date(m.createdAt).getTime()
+                : undefined,
+            };
+          });
+
+          setChatId(idFromRoute);
+          setMessages(mapped);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params?.chatId]); // ✅ only run when route chatId changes
+
   const uid = () =>
-    typeof crypto !== "undefined" ? crypto.randomUUID() : String(Date.now() + Math.random());
+    typeof crypto !== "undefined"
+      ? crypto.randomUUID()
+      : String(Date.now() + Math.random());
 
   const formatRoadmapTitles = (raw: string) => {
     const cleaned = raw.replace(/```json|```/g, "");
@@ -110,6 +168,17 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
     }
 
     return lines.join("\n").trimEnd();
+  };
+
+  const looksLikeRoadmapJson = (raw: string) => {
+    const s = (raw || "").trim();
+    if (!s) return false;
+
+    // common signals
+    if (s.startsWith("{") || s.startsWith("```json")) return true;
+    if (s.includes('"phases"') && s.includes('"title"')) return true;
+
+    return false;
   };
 
   const sendMessage = async () => {
@@ -147,7 +216,10 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
       let currentChatId = chatId;
 
       if (!currentChatId) {
-        const res = await startChat({ initialMessage: text, userId: auth?.user?.id });
+        const res = await startChat({
+          initialMessage: text,
+          userId: auth?.user?.id,
+        });
 
         if (!res?.success) throw new Error(res?.message || "Chat failed");
 
@@ -176,7 +248,11 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
         onToken: (t) => {
           if (!roadmapModeRef.current) {
             const hint = t.trim();
-            if (hint.startsWith("{") || hint.startsWith("```json") || hint.includes('"phases"')) {
+            if (
+              hint.startsWith("{") ||
+              hint.startsWith("```json") ||
+              hint.includes('"phases"')
+            ) {
               roadmapModeRef.current = true;
             }
           }
@@ -186,14 +262,18 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
             const live = formatRoadmapTitles(roadmapBufRef.current);
 
             setMessages((prev) =>
-              prev.map((m) => (m.id === thinkingId ? { ...m, content: live } : m)),
+              prev.map((m) =>
+                m.id === thinkingId ? { ...m, content: live } : m,
+              ),
             );
             return;
           }
 
           assistantText += t;
           setMessages((prev) =>
-            prev.map((m) => (m.id === thinkingId ? { ...m, content: assistantText } : m)),
+            prev.map((m) =>
+              m.id === thinkingId ? { ...m, content: assistantText } : m,
+            ),
           );
         },
 
@@ -218,13 +298,17 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
       } else {
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === thinkingId ? { ...m, content: "No response from AI. Try again." } : m,
+            m.id === thinkingId
+              ? { ...m, content: "No response from AI. Try again." }
+              : m,
           ),
         );
       }
     } catch (e: any) {
       setMessages((prev) =>
-        prev.map((m) => (m.id === thinkingId ? { ...m, content: e?.message || "Error" } : m)),
+        prev.map((m) =>
+          m.id === thinkingId ? { ...m, content: e?.message || "Error" } : m,
+        ),
       );
     } finally {
       setLoading(false);
@@ -255,7 +339,7 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
   );
 
   return (
-    <main className="flex-1 relative flex flex-col bg-grey p-4 sm:p-6">
+    <main className="h-screen flex-1 relative flex flex-col bg-grey p-4 sm:p-6">
       {/* Top Right Menu */}
       <div className="absolute top-4 right-6 z-20 flex items-center">
         <div
@@ -302,9 +386,15 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-6">
           <p className="text-[#DDDDDD] text-[20px] text-center">
-            <span className="text-[#DDDDDD]">{typedText.slice(0, normalLength)}</span>
-            <span className="text-[#E96559]">{typedText.slice(normalLength)}</span>
-            {typedLength < fullText.length && <span className="animate-blink">|</span>}
+            <span className="text-[#DDDDDD]">
+              {typedText.slice(0, normalLength)}
+            </span>
+            <span className="text-[#E96559]">
+              {typedText.slice(normalLength)}
+            </span>
+            {typedLength < fullText.length && (
+              <span className="animate-blink">|</span>
+            )}
           </p>
           {renderChatInput()}
         </div>
@@ -319,24 +409,45 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-center">{renderChatInput()}</div>
+          <div className="mt-4 flex items-center justify-center">
+            {renderChatInput()}
+          </div>
         </>
       )}
 
-      <LogoutModal open={showLogout} onClose={() => setShowLogout(false)} onConfirm={() => {}} />
+      <LogoutModal
+        open={showLogout}
+        onClose={() => setShowLogout(false)}
+        onConfirm={() => {}}
+      />
 
       <style jsx>{`
         @keyframes blink {
-          0%, 50%, 100% { opacity: 1; }
-          25%, 75% { opacity: 0; }
+          0%,
+          50%,
+          100% {
+            opacity: 1;
+          }
+          25%,
+          75% {
+            opacity: 0;
+          }
         }
-        .animate-blink { animation: blink 1s infinite; }
+        .animate-blink {
+          animation: blink 1s infinite;
+        }
       `}</style>
     </main>
   );
 }
 
-function ChatBubble({ role, content }: { role: "user" | "assistant"; content: string }) {
+function ChatBubble({
+  role,
+  content,
+}: {
+  role: "user" | "assistant";
+  content: string;
+}) {
   const isUser = role === "user";
   return (
     <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"}`}>
