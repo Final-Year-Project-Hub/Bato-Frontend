@@ -5,11 +5,11 @@ import StatsCard from "./_components/StatsCard";
 
 
 export default function AdminDashboard() {
-  // Mock data - replace with actual API calls
+ 
   const stats = [
     { title: "Total Users", value: "1,234", icon: Users, change: "+12%", color: "bg-blue-500" },
     { title: "Total Roadmaps", value: "89", icon: Map, change: "+8%", color: "bg-purple-500" },
-    { title: "Revenue", value: "$12,450", icon: DollarSign, change: "+23%", color: "bg-green-500" },
+    { title: "Revenue", value: "Rs12,450", icon: DollarSign, change: "+23%", color: "bg-green-500" },
     { title: "LLM Costs", value: "$3,200", icon: Cpu, change: "+5%", color: "bg-orange-500" },
     { title: "Documents", value: "456", icon: FileText, change: "+15%", color: "bg-indigo-500" },
     { title: "Active Users", value: "892", icon: TrendingUp, change: "+18%", color: "bg-pink-500" },
@@ -30,11 +30,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Revenue Chart */}
-      {/* <div className="bg-background rounded-2xl border border-border p-6">
-        <h2 className="text-xl font-bold text-foreground mb-6">Revenue & Costs</h2>
-        <RevenueChart />
-      </div> */}
+    
     </div>
   );
 }

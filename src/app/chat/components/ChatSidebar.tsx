@@ -5,7 +5,7 @@ import Image from "next/image";
 import { SquarePen, Search, GitBranch, PanelLeft } from "lucide-react";
 import clsx from "clsx";
 import SearchChatModal from "./SearchChatModal";
-import { useAuth } from "@/app/features/auth/hooks/useAuth";
+
 
 const roadmaps = [
   "React Roadmap",
