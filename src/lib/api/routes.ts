@@ -1,4 +1,3 @@
-// src/lib/api/routes.ts
 export type ApiRoutes = {
   "/auth/signup": {
     success: boolean;
@@ -23,20 +22,50 @@ export type ApiRoutes = {
     };
   };
 
-   "/auth/verifyOtp": {
+  "/auth/verifyOtp": {
     success: boolean;
     message: string;
   };
 
-    "/auth/resendOtp": {
+  "/auth/resendOtp": {
     success: boolean;
     message: string;
   };
 
-  "/auth/logout": { 
+  "/auth/logout": {
     success: boolean;
     message: string;
   };
 
-   
+  // ROADMAP LIST
+  "/api/roadmap": {
+    success: boolean;
+    message: string;
+    data: {
+      id: string;
+      title: string;
+      goal: string;
+      proficiency: string;
+      createdAt: string;
+      isSelected: boolean;
+    }[];
+  };
+  "/api/roadmap/:id": {
+    success: boolean;
+    message: string;
+    data: {
+      id: string;
+      userId: string;
+      chatSessionId: string;
+      title: string;
+      goal: string;
+      intent: string;
+      proficiency: string;
+      roadmapData: Record<string, unknown>;
+      message: string;
+      isSelected: boolean;
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
 };

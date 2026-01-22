@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import {
@@ -804,4 +804,5 @@ function ChatBubble({
       </div>
     </div>
   );
-}
+} 
+ 
