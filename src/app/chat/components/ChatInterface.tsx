@@ -9,14 +9,15 @@ import {
   LogOut,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { toast } from "sonner";
 
 import LogoutModal from "./LogoutModal";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { useHealth } from "@/lib/hooks/useHealth";
 import { useChat } from "@/lib/hooks/useChat";
 import { useRoadmapStream } from "@/lib/hooks/useRoadmapStream";
-import { useParams } from "next/navigation";
+import { apiFetch } from "@/lib/api";
 
 type ChatMsg = {
   id: string;
@@ -34,7 +35,7 @@ const TITLES = [
 ];
 
 export default function ChatInterface() {
-  const [currentTitleIndex, setCurrentTitleIndex] = useState(0);
+  const [currentTitleIndex] = useState(0);
 
   const router = useRouter();
   const auth = useAuth();
@@ -70,6 +71,47 @@ export default function ChatInterface() {
     const { normal, highlight } = TITLES[safeIndex];
     return { fullText: normal + highlight, normalLength: normal.length };
   }, [currentTitleIndex]);
+
+  // logout function
+  const handleLogout = async () => {
+    const toastId = toast("Logging out...", { duration: Infinity });
+
+    try {
+      const res = await apiFetch("/auth/logout", {
+        method: "POST",
+      });
+
+      if (res.success) {
+        toast.success("Logged out successfully ", {
+          id: toastId,
+          duration: 2000,
+        });
+
+        await auth.refresh();
+
+        setShowLogout(false);
+        setOpenMenu(false);
+
+        setTimeout(() => {
+          router.push("/login");
+        }, 500);
+      } else {
+        toast.error(res.message || "Logout failed ", {
+          id: toastId,
+        });
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      await auth.refresh();
+      setShowLogout(false);
+      setOpenMenu(false);
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 500);
+    }
+  };
 
   useEffect(() => {
     if (titleIntervalRef.current) clearInterval(titleIntervalRef.current);
@@ -121,7 +163,7 @@ export default function ChatInterface() {
         if (cancelled) return;
 
         if (res?.success && Array.isArray(res.data)) {
-          const mapped: ChatMsg[] = res.data.map((m: any) => {
+          const mapped: ChatMsg[] = res.data.map((m: ChatMsg & { content: string }) => {
             const rawContent = m.content ?? "";
             const displayContent =
               m.role === "assistant" && looksLikeRoadmapJson(rawContent)
@@ -150,8 +192,7 @@ export default function ChatInterface() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params?.chatId]);
+  }, [params?.chatId, getMessages, isStreaming, loading]);
 
   const uid = () =>
     typeof crypto !== "undefined"
@@ -268,7 +309,6 @@ export default function ChatInterface() {
     const s = (raw || "").trim();
     if (!s) return false;
 
-    // common signals
     if (s.startsWith("{") || s.startsWith("```json")) return true;
     if (s.includes('"phases"') && s.includes('"title"')) return true;
 
@@ -349,7 +389,6 @@ export default function ChatInterface() {
         },
 
         onStatus: (s) => {
-          // show status only if no tokens yet
           if (!hasAnyTokenRef.current) {
             setMessages((prev) =>
               prev.map((m) =>
@@ -396,13 +435,14 @@ export default function ChatInterface() {
 
         onError: (err) => {
           setMessages((prev) =>
-            prev.map((m) => (m.id === thinkingId ? { ...m, content: err } : m)),
+            prev.map((m) =>
+              m.id === thinkingId ? { ...m, content: err } : m,
+            ),
           );
         },
       });
 
       const finalRaw = rawStreamText.trim();
-
       const toSave = finalRaw;
 
       if (toSave) {
@@ -420,15 +460,16 @@ export default function ChatInterface() {
           ),
         );
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === thinkingId ? { ...m, content: e?.message || "Error" } : m,
+          m.id === thinkingId
+            ? { ...m, content: (e as Error)?.message || "Error" }
+            : m,
         ),
       );
     } finally {
       setLoading(false);
-      setStreamingMessageId(null);
     }
   };
 
@@ -479,7 +520,7 @@ export default function ChatInterface() {
         </button>
 
         {openMenu && (
-          <div className="absolute right-0 top-8 mt-3 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
+          <div className="absolute right-0 mt-3 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
             <button
               onClick={() => router.push("./dashboard")}
               className="w-full px-4 py-2 flex gap-2 text-sm text-white/80 hover:bg-white/5"
@@ -544,7 +585,7 @@ export default function ChatInterface() {
       <LogoutModal
         open={showLogout}
         onClose={() => setShowLogout(false)}
-        onConfirm={() => {}}
+        onConfirm={handleLogout}
       />
 
       <style jsx>{`
@@ -598,7 +639,12 @@ function ChatBubble({
       topics: Array<{ text: string; isSubtopic: boolean }>;
     }> = [];
 
-    let currentPhase: any = null;
+    let currentPhase: {
+      title: string;
+      hours: string;
+      description: string;
+      topics: Array<{ text: string; isSubtopic: boolean }>;
+    } | null = null;
 
     for (const line of lines) {
       if (line.startsWith("Roadmap:")) {
@@ -642,7 +688,7 @@ function ChatBubble({
       <div className="space-y-6">
         {/* Header */}
         {goal && (
-          <div className="bg-gradient-to-r from-[#E96559]/20 to-transparent p-4 rounded-lg border-l-4 border-[#E96559]">
+          <div className="bg-linear-to-r from-[#E96559]/20 to-transparent p-4 rounded-lg border-l-4 border-[#E96559]">
             <h2 className="text-xl font-bold text-white mb-2">{goal}</h2>
             {metadata && <p className="text-sm text-white/70">{metadata}</p>}
           </div>

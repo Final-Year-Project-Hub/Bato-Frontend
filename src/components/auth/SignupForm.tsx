@@ -66,7 +66,7 @@ export default function SignupForm() {
         return;
       }
 
-      toast.error(result?.message || "Signup failed ❌", {
+      toast.error(result?.message || "Signup failed ", {
         id: toastId,
       });
     } catch (error) {
@@ -93,7 +93,7 @@ export default function SignupForm() {
       });
 
       if (res.success) {
-        toast.success("Email verified ✅", {
+        toast.success("Email verified ", {
           id: toastId,
           description: "You can now login to your account",
         });
@@ -104,7 +104,7 @@ export default function SignupForm() {
           router.push("/login");
         }, 800);
       } else {
-        toast.error(res.message || "Invalid OTP ❌", {
+        toast.error(res.message || "Invalid OTP ", {
           id: toastId,
         });
       }
@@ -134,7 +134,7 @@ export default function SignupForm() {
         description: res.message,
       });
     } catch (error) {
-      toast.error("Failed to resend OTP ❌", {
+      toast.error("Failed to resend OTP ", {
         id: toastId,
       });
       console.error("Resend OTP error:", error);
@@ -224,12 +224,12 @@ export default function SignupForm() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="h-10 mt-1 bg-white/10 border-white/20 text-white pr-10"
+                  className="h-10 mt-1 bg-white/10 border-white/20 text-white pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-10 text-white/60"
+                  className="absolute right-3 top-10 text-white/60 hover:text-white transition-colors"
                 >
                   {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
@@ -248,12 +248,12 @@ export default function SignupForm() {
                 <Input
                   type={showConfirm ? "text" : "password"}
                   {...register("confirmPassword")}
-                  className="h-10 mt-1 bg-white/10 border-white/20 text-white pr-10"
+                  className="h-10 mt-1 bg-white/10 border-white/20 text-white pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-10 text-white/60"
+                  className="absolute right-3 top-10 text-white/60 hover:text-white transition-colors"
                 >
                   {showConfirm ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>

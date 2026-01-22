@@ -65,7 +65,7 @@ function TopBox({ stat }: { stat: Stat }) {
   const { label, value, delta, Icon, iconWrapClass, iconClass } = stat;
 
   return (
-    <div className="rounded-xl border border-white/25 bg-background/60 p-6 flex items-start justify-between ">
+    <div className="rounded-xl border border-white/25 bg-background/60 p-6  mt-10 flex items-start justify-between ">
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="text-3xl font-semibold text-primary">{value}</p>

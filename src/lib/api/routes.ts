@@ -32,4 +32,9 @@ export type ApiRoutes = {
     success: boolean;
     message: string;
   };
+
+  "/auth/logout": { 
+    success: boolean;
+    message: string;
+  };
 };

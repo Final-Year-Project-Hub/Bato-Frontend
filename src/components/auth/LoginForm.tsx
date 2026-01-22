@@ -41,7 +41,7 @@ export default function LoginForm() {
       });
 
       if (res.success) {
-        toast.success("Login successful 🚀", {
+        toast.success("Login successful ", {
           id: toastId,
           description: "Welcome back to bato.ai",
           duration: 2500,
@@ -53,12 +53,12 @@ export default function LoginForm() {
           router.push("/chat");
         }, 800);
       } else {
-        toast.error(res.message || "Invalid email or password ❌", {
+        toast.error(res.message || "Invalid email or password ", {
           id: toastId,
         });
       }
     } catch (error) {
-      toast.error("Server error ⚠️", {
+      toast.error("Server error ", {
         id: toastId,
         description: "Please try again later",
       });
@@ -123,12 +123,12 @@ export default function LoginForm() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="h-10 mt-1 bg-white/20 border-white/20 text-white pr-10"
+                  className="h-10 mt-1 bg-white/20 border-white/20 text-white pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-10 text-white/60"
+                  className="absolute right-3 top-10 text-white/60 hover:text-white transition-colors"
                 >
                   {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
