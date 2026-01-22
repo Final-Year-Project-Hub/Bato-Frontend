@@ -102,6 +102,7 @@ export default function ChatInterface({ currentTitleIndex = 0 }: ChatInterfacePr
       }, 500);
     }
   };
+  
   useEffect(() => {
     if (titleIntervalRef.current) clearInterval(titleIntervalRef.current);
     setTypedLength(0);
