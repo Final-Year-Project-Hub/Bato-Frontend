@@ -520,7 +520,7 @@ export default function ChatInterface() {
         </button>
 
         {openMenu && (
-          <div className="absolute right-0 mt-3 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
+          <div className="absolute right-0 mt-10 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
             <button
               onClick={() => router.push("./dashboard")}
               className="w-full px-4 py-2 flex gap-2 text-sm text-white/80 hover:bg-white/5"
