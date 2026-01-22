@@ -7,5 +7,5 @@ interface PageProps {
 }
 export default async function Page(props: PageProps) {
   const { chatId } = await props.params;
-  return <ChatInterface currentTitleIndex={parseInt(chatId, 10)} />;
+  return <ChatInterface />;
 }

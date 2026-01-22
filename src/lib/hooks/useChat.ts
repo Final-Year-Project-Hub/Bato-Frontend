@@ -51,5 +51,24 @@ export function useChat() {
     return res; // usually { success: true, data: Message[] }
   };
 
-  return { startChat, addMessage, loading, getMessages };
+  const getChats = async (userId: string) => {
+    if (!userId) throw new Error("userId is required");
+
+    setLoading(true);
+    try {
+      const r = await fetch(`${BACKEND}/api/chats?userId=${userId}`, {
+        credentials: "include",
+      });
+
+      const res = await r.json().catch(() => null);
+      if (!r.ok)
+        throw new Error(res?.message || res?.error || "Failed to fetch chats");
+
+      return res; // { success: true, data: Chat[] }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return { startChat, addMessage, loading, getMessages, getChats };
 }
