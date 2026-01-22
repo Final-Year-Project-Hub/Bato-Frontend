@@ -1,10 +1,29 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { RoadmapsGrid } from "./_components/RoadmapGrid";
+import RoadmapGrid from "./_components/RoadmapGrid"
 import { Map, TrendingUp, Sparkles } from "lucide-react";
+import { useRoadmaps } from "@/lib/hooks/useRoadmaps";
 
 export default function RoadmapsPage() {
+  const { roadmaps, loading } = useRoadmaps();
+
+  //  SAFETY CHECK
+  const safeRoadmaps = roadmaps || [];
+
+  // Calculate total hours (estimate based on proficiency)
+  const totalHours = safeRoadmaps.reduce((sum, roadmap) => {
+    const hours =
+      roadmap.proficiency === "beginner"
+        ? 150
+        : roadmap.proficiency === "intermediate"
+          ? 100
+          : roadmap.proficiency === "advanced"
+            ? 80
+            : 120;
+    return sum + hours;
+  }, 0);
+
   return (
     <div className="min-h-screen bg-grey text-foreground font-sans">
       <div className="my-container py-10">
@@ -32,7 +51,9 @@ export default function RoadmapsPage() {
                 <Map className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <div className="text-2xl font-bold text-foreground">9</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {loading ? "..." : safeRoadmaps.length}
+                </div>
                 <div className="text-xs text-foreground/60">Roadmaps</div>
               </div>
             </div>
@@ -42,7 +63,9 @@ export default function RoadmapsPage() {
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <div className="text-2xl font-bold text-foreground">1,500+</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {loading ? "..." : `${totalHours.toLocaleString()}+`}
+                </div>
                 <div className="text-xs text-foreground/60">Total Hours</div>
               </div>
             </div>
@@ -67,7 +90,7 @@ export default function RoadmapsPage() {
         </motion.div>
 
         {/* Roadmaps Grid */}
-        <RoadmapsGrid />
+        <RoadmapGrid  />
       </div>
     </div>
   );
