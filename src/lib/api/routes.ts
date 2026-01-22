@@ -37,4 +37,6 @@ export type ApiRoutes = {
     success: boolean;
     message: string;
   };
+
+   
 };
