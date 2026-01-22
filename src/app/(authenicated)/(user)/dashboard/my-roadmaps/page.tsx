@@ -6,13 +6,10 @@ import { Map, TrendingUp, Sparkles } from "lucide-react";
 import { useRoadmaps } from "@/lib/hooks/useRoadmaps";
 
 export default function RoadmapsPage() {
-  const { roadmaps, loading } = useRoadmaps();
-
-  //  SAFETY CHECK
-  const safeRoadmaps = roadmaps || [];
+  const { roadmaps, loading, error } = useRoadmaps();
 
   // Calculate total hours (estimate based on proficiency)
-  const totalHours = safeRoadmaps.reduce((sum, roadmap) => {
+  const totalHours = roadmaps.reduce((sum, roadmap) => {
     const hours =
       roadmap.proficiency === "beginner"
         ? 150
@@ -52,7 +49,7 @@ export default function RoadmapsPage() {
               </div>
               <div className="text-left">
                 <div className="text-2xl font-bold text-foreground">
-                  {loading ? "..." : safeRoadmaps.length}
+                  {loading ? "..." : roadmaps.length}
                 </div>
                 <div className="text-xs text-foreground/60">Roadmaps</div>
               </div>
@@ -89,8 +86,8 @@ export default function RoadmapsPage() {
           </div>
         </motion.div>
 
-        {/* Roadmaps Grid */}
-        <RoadmapGrid  />
+        {/* Roadmaps Grid - PASS DATA AS PROPS */}
+        <RoadmapGrid roadmaps={roadmaps} loading={loading} error={error} />
       </div>
     </div>
   );

@@ -75,7 +75,7 @@ export const RoadmapCard = ({
               className="absolute right-0 mt-2 w-44 bg-background border border-border
                          rounded-lg shadow-xl z-50 overflow-hidden"
             >
-              {/* 🚀 Use router.push here */}
+              {/*  Use router.push here */}
               <button
                 onClick={() => router.push(`/dashboard/roadmap/${id}`)}
                 className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-grey transition"
