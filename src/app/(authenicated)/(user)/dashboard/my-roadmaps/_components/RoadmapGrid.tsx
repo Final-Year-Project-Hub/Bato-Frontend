@@ -1,7 +1,7 @@
 "use client";
 
 import { RoadmapCard } from './RoadmapCard';
-import { useRoadmaps } from '@/lib/hooks/useRoadmaps';
+import { Roadmap } from '@/lib/hooks/useRoadmaps';
 import { 
   Code2, 
   Database, 
@@ -45,9 +45,14 @@ const colorGradients = [
   'bg-gradient-to-br from-teal-500 to-teal-600',
 ];
 
-export default function RoadmapsGrid() {
-  const { roadmaps, loading, error } = useRoadmaps();
+// ✅ UPDATED: Accept props instead of using useRoadmaps hook
+interface RoadmapsGridProps {
+  roadmaps: Roadmap[];
+  loading: boolean;
+  error: string | null;
+}
 
+export default function RoadmapsGrid({ roadmaps, loading, error }: RoadmapsGridProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-100">
@@ -63,7 +68,6 @@ export default function RoadmapsGrid() {
     return (
       <div className="flex items-center justify-center min-h-100">
         <div className="text-center max-w-md">
-          
           <h3 className="text-xl font-semibold text-foreground mb-2">Failed to Load Roadmaps</h3>
           <p className="text-red-500 mb-4">{error}</p>
           <button 
@@ -77,12 +81,10 @@ export default function RoadmapsGrid() {
     );
   }
 
-  // ✅ SAFETY CHECK ADDED HERE
   if (!roadmaps || roadmaps.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-100">
         <div className="text-center max-w-md">
-          
           <h3 className="text-2xl font-bold text-foreground mb-2">No Roadmaps Yet</h3>
           <p className="text-foreground/60 mb-6">
             Start your learning journey by creating your first roadmap!
@@ -104,7 +106,7 @@ export default function RoadmapsGrid() {
         const icon = getIconForTitle(roadmap.title);
         const color = colorGradients[index % colorGradients.length];
         
-        // Estimate hours based on proficiency (you can adjust this logic)
+        // Estimate hours based on proficiency
         const estimatedHours = 
           roadmap.proficiency === 'beginner' ? 150 :
           roadmap.proficiency === 'intermediate' ? 100 :
@@ -126,4 +128,4 @@ export default function RoadmapsGrid() {
       })}
     </div>
   );
-};
+}
