@@ -21,7 +21,6 @@ export const useRoadmaps = () => {
       setLoading(true);
       setError(null);
 
-      // ✅ BACK TO ORIGINAL: Direct fetch (not apiFetch)
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/roadmap`,
         {
@@ -40,8 +39,22 @@ export const useRoadmaps = () => {
         return;
       }
 
-      // ✅ FIX: Extract data array from response
-      setRoadmaps(response.data || []);
+      //  FIX: Your backend returns array directly, NOT { data: [...] }
+      let roadmapsData: Roadmap[] = [];
+      
+      if (Array.isArray(response)) {
+        // Backend returns array directly
+        roadmapsData = response;
+      } else if (response.data && Array.isArray(response.data)) {
+        // Fallback: if it returns { data: [...] }
+        roadmapsData = response.data;
+      } else {
+        console.error("Unexpected response format:", response);
+        setError("Unexpected response format from server");
+        return;
+      }
+
+      setRoadmaps(roadmapsData);
     } catch (err: unknown) {
       console.error("Error fetching roadmaps:", err);
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch roadmaps";

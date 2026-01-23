@@ -68,7 +68,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#1e465e] flex items-center justify-center px-4">
+    <div className="relative min-h-screen bg-background flex items-center justify-center px-4">
       {/* LOGO */}
       <div className="absolute top-6 right-6 z-50">
         <Logo />
@@ -78,26 +78,19 @@ export default function LoginForm() {
       <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row">
         {/* LEFT IMAGE */}
         <div
-          className="hidden lg:block lg:w-7/12 min-h-[70vh] bg-cover bg-center"
+          className="hidden lg:block lg:w-7/12 min-h-[70vh] bg-cover bg-center rounded-l-2xl"
           style={{ backgroundImage: "url('/images/path.png')" }}
         />
 
         {/* RIGHT CARD */}
         <div className="w-full lg:w-5/12 flex items-center justify-center py-10 lg:py-0">
-          <Card
-            className="w-full max-w-md px-8 py-8 rounded-2xl text-white border border-white/10 flex flex-col"
-            style={{
-              background: "rgba(35, 56, 69, 0.85)",
-              backdropFilter: "blur(14px)",
-              boxShadow: "0 25px 70px rgba(0,0,0,0.65)",
-            }}
-          >
+          <Card className="w-full max-w-md px-8 py-8 rounded-2xl lg:rounded-l-none bg-background border border-border">
             {/* HEADER */}
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-semibold text-[#EC5D44]">
+              <h2 className="text-2xl font-semibold text-primary">
                 Welcome back!!!
               </h2>
-              <p className="text-sm text-[#EC5D44] mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Access your AI-guided learning roadmaps
               </p>
             </div>
@@ -105,11 +98,11 @@ export default function LoginForm() {
             {/* FORM */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="text-sm text-[#dbeafe]">Email</label>
+                <label className="text-sm text-foreground">Email</label>
                 <Input
                   placeholder="m@example.com"
                   {...register("email")}
-                  className="h-10 mt-1 bg-white/20 border-white/20 text-white placeholder:text-white/60"
+                  className="h-10 mt-1 bg-grey border-border text-foreground placeholder:text-muted-foreground"
                 />
                 {errors.email && (
                   <p className="text-red-400 text-sm mt-1">
@@ -119,16 +112,16 @@ export default function LoginForm() {
               </div>
 
               <div className="relative">
-                <label className="text-sm text-[#dbeafe]">Password</label>
+                <label className="text-sm text-foreground">Password</label>
                 <Input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="h-10 mt-1 bg-white/20 border-white/20 text-white pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                  className="h-10 mt-1 bg-grey border-border text-foreground pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-10 text-white/60 hover:text-white transition-colors"
+                  className="absolute right-3 top-10 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
@@ -141,7 +134,7 @@ export default function LoginForm() {
 
               <div
                 onClick={() => router.push("/forgetpw")}
-                className="text-center text-sm text-[#EC5D44] cursor-pointer mt-2 hover:underline"
+                className="text-center text-sm text-primary cursor-pointer mt-2 hover:underline"
               >
                 Forgot Password?
               </div>
@@ -149,7 +142,7 @@ export default function LoginForm() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#EC5D44] hover:bg-[#EC5D44]/90 mt-3"
+                className="w-full bg-primary hover:bg-primary/90 text-white mt-3"
               >
                 {isSubmitting ? "Signing in..." : "Sign In"}
               </Button>
@@ -158,22 +151,22 @@ export default function LoginForm() {
             {/* SOCIAL */}
             <div className="mt-4">
               <div className="flex items-center">
-                <span className="flex-1 h-px bg-white/20" />
-                <span className="px-3 py-1 text-xs font-semibold text-[#45556C] bg-white rounded-full">
+                <span className="flex-1 h-px bg-border" />
+                <span className="px-3 py-1 text-xs font-semibold text-muted-foreground bg-grey rounded-full">
                   OR CONTINUE WITH
                 </span>
-                <span className="flex-1 h-px bg-white/20" />
+                <span className="flex-1 h-px bg-border" />
               </div>
 
-              <Button className="w-full h-10 bg-white/10 text-white flex items-center justify-center gap-3 hover:bg-white/20 font-medium mt-4">
+              <Button className="w-full h-10 bg-grey text-foreground flex items-center justify-center gap-3 hover:bg-grey/80 font-medium mt-4 border border-border">
                 <FcGoogle size={18} /> Google
               </Button>
 
-              <p className="text-center text-sm text-[#A1A1AA] mt-5">
+              <p className="text-center text-sm text-muted-foreground mt-5">
                 New to bato.ai?{" "}
                 <span
                   onClick={() => router.push("/signup")}
-                  className="hover:underline cursor-pointer text-[#EC5D44] font-medium"
+                  className="hover:underline cursor-pointer text-primary font-medium"
                 >
                   Create an account
                 </span>

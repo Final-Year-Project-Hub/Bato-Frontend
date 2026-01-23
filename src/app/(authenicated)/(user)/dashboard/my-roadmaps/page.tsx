@@ -8,6 +8,12 @@ import { useRoadmaps } from "@/lib/hooks/useRoadmaps";
 export default function RoadmapsPage() {
   const { roadmaps, loading, error } = useRoadmaps();
 
+  console.log(" RoadmapsPage rendered");
+  console.log(" roadmaps from hook:", roadmaps);
+  console.log(" loading from hook:", loading);
+  console.log(" error from hook:", error);
+  console.log(" About to pass to RoadmapGrid - roadmaps.length:", roadmaps?.length);
+
   // Calculate total hours (estimate based on proficiency)
   const totalHours = roadmaps.reduce((sum, roadmap) => {
     const hours =
@@ -20,6 +26,9 @@ export default function RoadmapsPage() {
             : 120;
     return sum + hours;
   }, 0);
+
+  console.log("🏠 totalHours calculated:", totalHours);
+  console.log("🏠 Rendering RoadmapGrid with:", { roadmaps, loading, error });
 
   return (
     <div className="min-h-screen bg-grey text-foreground font-sans">

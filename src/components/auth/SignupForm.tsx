@@ -143,14 +143,14 @@ export default function SignupForm() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* BACKGROUND */}
+      {/* BACKGROUND IMAGE */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: `
             linear-gradient(
-              rgba(30, 70, 94, 0.88),
-              rgba(30, 70, 94, 0.88)
+              rgba(0, 0, 0, 0.7),
+              rgba(0, 0, 0, 0.7)
             ),
             url('/images/path.png')
           `,
@@ -167,34 +167,27 @@ export default function SignupForm() {
 
       {/* CENTER */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
-        <Card
-          className="w-full max-w-118.75 min-h-168.75 px-8 py-8 rounded-2xl text-white border border-white/10 flex flex-col justify-between"
-          style={{
-            backgroundColor: "#233845",
-            backdropFilter: "blur(14px)",
-            boxShadow: "0 25px 70px rgba(0,0,0,0.65)",
-          }}
-        >
+        <Card className="w-full max-w-md px-8 py-8 rounded-2xl bg-background border border-border">
           {/* FORM */}
           <div>
-            <div className="mb-3 text-center">
-              <h2 className="text-xl font-semibold text-[#EC5D44]">
+            <div className="mb-6 text-center">
+              <h2 className="text-xl font-semibold text-primary">
                 Create an account
               </h2>
-              <p className="text-sm text-[#EC5D44]/80 mt-1">
-                Enter your details below to get started with <br />
-                <span className="font-medium">bato.ai</span>
+              <p className="text-sm text-muted-foreground mt-1">
+                Enter your details below to get started with{" "}
+                <span className="font-medium text-foreground">bato.ai</span>
               </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* FULL NAME */}
               <div className="relative">
-                <label className="text-sm text-[#dbeafe]">Full Name</label>
+                <label className="text-sm text-foreground">Full Name</label>
                 <Input
                   {...register("fullName")}
                   placeholder="John Doe"
-                  className="h-10 mt-1 bg-white/10 border-white/20 text-white"
+                  className="h-10 mt-1 bg-grey border-border text-foreground placeholder:text-muted-foreground"
                 />
                 {errors.fullName && (
                   <span className="absolute -bottom-4 text-xs text-red-400">
@@ -205,11 +198,11 @@ export default function SignupForm() {
 
               {/* EMAIL */}
               <div className="relative">
-                <label className="text-sm text-[#dbeafe]">Email</label>
+                <label className="text-sm text-foreground">Email</label>
                 <Input
                   {...register("email")}
                   placeholder="m@example.com"
-                  className="h-10 mt-1 bg-white/10 border-white/20 text-white"
+                  className="h-10 mt-1 bg-grey border-border text-foreground placeholder:text-muted-foreground"
                 />
                 {errors.email && (
                   <span className="absolute -bottom-4 text-xs text-red-400">
@@ -220,16 +213,16 @@ export default function SignupForm() {
 
               {/* PASSWORD */}
               <div className="relative">
-                <label className="text-sm text-[#dbeafe]">Password</label>
+                <label className="text-sm text-foreground">Password</label>
                 <Input
                   type={showPassword ? "text" : "password"}
                   {...register("password")}
-                  className="h-10 mt-1 bg-white/10 border-white/20 text-white pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                  className="h-10 mt-1 bg-grey border-border text-foreground pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-10 text-white/60 hover:text-white transition-colors"
+                  className="absolute right-3 top-10 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
@@ -242,18 +235,18 @@ export default function SignupForm() {
 
               {/* CONFIRM PASSWORD */}
               <div className="relative">
-                <label className="text-sm text-[#dbeafe]">
+                <label className="text-sm text-foreground">
                   Confirm Password
                 </label>
                 <Input
                   type={showConfirm ? "text" : "password"}
                   {...register("confirmPassword")}
-                  className="h-10 mt-1 bg-white/10 border-white/20 text-white pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
+                  className="h-10 mt-1 bg-grey border-border text-foreground pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden [&::-webkit-credentials-auto-fill-button]:hidden"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-10 text-white/60 hover:text-white transition-colors"
+                  className="absolute right-3 top-10 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showConfirm ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
@@ -267,7 +260,7 @@ export default function SignupForm() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#EC5D44] hover:bg-[#EC5D44]/90 mt-6"
+                className="w-full bg-primary hover:bg-primary/90 text-white mt-6"
               >
                 {isSubmitting ? "Creating account..." : "Sign Up"}
               </Button>
@@ -275,24 +268,24 @@ export default function SignupForm() {
           </div>
 
           {/* SOCIAL */}
-          <div className="space-y-4">
+          <div className="space-y-4 mt-6">
             <div className="flex items-center">
-              <span className="h-px flex-1 bg-white/20" />
-              <span className="px-3 py-1 text-xs bg-white rounded-full text-[#45556C] font-semibold">
+              <span className="h-px flex-1 bg-border" />
+              <span className="px-3 py-1 text-xs bg-grey rounded-full text-muted-foreground font-semibold">
                 OR CONTINUE WITH
               </span>
-              <span className="h-px flex-1 bg-white/20" />
+              <span className="h-px flex-1 bg-border" />
             </div>
 
-            <Button className="w-full h-10 bg-white/10 text-white hover:bg-white/20 flex items-center justify-center gap-3">
+            <Button className="w-full h-10 bg-grey text-foreground hover:bg-grey/80 flex items-center justify-center gap-3 border border-border">
               <FcGoogle size={18} /> Google
             </Button>
 
-            <p className="text-center text-sm text-[#A1A1AA]">
+            <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <span
                 onClick={() => router.push("/login")}
-                className="hover:underline cursor-pointer text-[#EC5D44] font-medium"
+                className="hover:underline cursor-pointer text-primary font-medium"
               >
                 Sign in
               </span>
