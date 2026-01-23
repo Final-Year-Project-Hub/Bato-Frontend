@@ -14,6 +14,7 @@ import Logo from "@/components/Logo";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { toast } from "sonner";
+// import Cookies from "js-cookie";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -46,6 +47,9 @@ export default function LoginForm() {
           description: "Welcome back to bato.ai",
           duration: 2500,
         });
+        // if (res.data.accessToken) {
+        //   Cookies.set("token", res.data.accessToken, { expires: 7 }); // 7 days
+        // }
 
         await refresh();
 
