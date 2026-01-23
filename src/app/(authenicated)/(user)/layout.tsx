@@ -6,10 +6,5 @@ export default async function AuthenticatedLayout({
 }: {
   children: ReactNode;
 }) {
-  return;
-  //  <AuthenticatedShell>
-  {
-    children;
-  }
-  // </AuthenticatedShell>;
+  return <AuthenticatedShell>{children}</AuthenticatedShell>;
 }

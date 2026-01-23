@@ -21,31 +21,33 @@ export const useRoadmaps = () => {
       setLoading(true);
       setError(null);
 
-      // ✅ BACK TO ORIGINAL: Direct fetch (not apiFetch)
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/roadmap`,
         {
           method: "GET",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
 
       const response = await res.json();
 
       if (!res.ok) {
-        setError(response.error || response.message || "Failed to fetch roadmaps");
+        setError(response?.message || "Failed to fetch roadmaps");
         return;
       }
 
-      // ✅ FIX: Extract data array from response
-      setRoadmaps(response.data || []);
-    } catch (err: unknown) {
+      //  NORMALIZE ONCE
+      const list: Roadmap[] =
+        Array.isArray(response) ? response :
+        Array.isArray(response.data) ? response.data :
+        Array.isArray(response.data?.roadmaps) ? response.data.roadmaps :
+        [];
+
+      setRoadmaps(list);
+    } catch (err) {
       console.error("Error fetching roadmaps:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch roadmaps";
-      setError(errorMessage);
+      setError("Failed to fetch roadmaps");
     } finally {
       setLoading(false);
     }
