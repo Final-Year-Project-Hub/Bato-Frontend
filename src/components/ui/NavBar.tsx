@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "./button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
+import NavAuthActions from "./NavAuthActions";
 
 export interface NavItem {
   name: string;
@@ -17,7 +18,6 @@ export interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { name: "Home", scrollTo: "home" },
   { name: "Features", scrollTo: "features" },
-
   { name: "How It Works", scrollTo: "how-it-works" },
 ];
 
@@ -46,7 +46,7 @@ export default function NavBar() {
   if (isMobile) {
     return (
       <nav className="h-16 shadow-sm z-50 relative w-full flex justify-between items-center px-4 py-2 mx-auto bg-background border border-b-border">
-        <Link href="/">
+        <Link href="/" className="cursor-pointer">
           <Image
             src="/logo.svg"
             alt="logo"
@@ -136,7 +136,7 @@ export default function NavBar() {
                 key={item.name}
                 onClick={() => handleNavClick(item)}
                 className={cn(
-                  "block rounded-lg p-2 text-foreground hover:text-primary",
+                  "block rounded-lg p-2 text-foreground hover:text-primary cursor-pointer",
                 )}
               >
                 {item.name}
@@ -158,14 +158,7 @@ export default function NavBar() {
         {/* Right Actions */}
         <div className="flex items-center gap-6">
           <ThemeToggle />
-          <div className="flex gap-6 items-center">
-            <Link href="/login" className="text-foreground hover:text-primary">
-              Login
-            </Link>
-            <Link href="/signup">
-              <Button className="px-2 py-3 font-semibold">Sign Up</Button>
-            </Link>
-          </div>
+          <NavAuthActions />
         </div>
       </div>
     </nav>

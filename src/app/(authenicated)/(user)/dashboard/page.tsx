@@ -127,7 +127,7 @@ export default function Page() {
 
       {/* ROADMAP HEADER */}
       <div className="flex justify-between">
-        <p className="text-primary text-xl font-semibold">Your Roadmaps</p>
+        <p className="text-primary text-2xl font-semibold">Your Roadmaps</p>
         <Link
           href="/dashboard/my-roadmaps"
           className="text-sm text-secondary font-medium"
@@ -137,7 +137,7 @@ export default function Page() {
       </div>
 
       {/* ROADMAP LIST */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         {loading && (
           <p className="text-muted-foreground col-span-full text-center py-8">
             Loading roadmaps...
