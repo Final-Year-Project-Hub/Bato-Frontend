@@ -32,68 +32,57 @@ export default function SideBar({
   onViewChange: (view: ViewType) => void;
 }) {
   return (
-    <>
-      {/* MOBILE OVERLAY */}
-      {!collapsed && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/40 z-40"
-          onClick={() => onCollapsedChange(true)}
-        />
+    <aside
+      className={clsx(
+        "h-screen bg-background border-r border-white/5 flex flex-col transition-all duration-300 overflow-hidden",
+        collapsed ? "w-16" : "w-72"
       )}
-
-      <aside
-        className={clsx(
-          "fixed top-0 left-0 h-screen bg-background border-r border-white/5 flex flex-col transition-transform duration-300 ease-in-out z-50",
-          collapsed ? "-translate-x-full" : "translate-x-0",
-          "w-72 lg:w-72"
-        )}
-      >
-        {/* Header */}
-        <div className="relative flex items-center px-4 py-4 justify-between">
-          {!collapsed ? (
-            <>
-              <Image src="/logo.svg" alt="bato.ai" width={100} height={28} />
-              <HoverButton
-                onClick={() => onCollapsedChange(true)}
-                tooltip="Close sidebar"
-              />
-            </>
-          ) : (
-            <HoverButtonCollapsed
-              onClick={() => onCollapsedChange(false)}
-              tooltip="Open sidebar"
+    >
+      {/* Header */}
+      <div className="relative flex items-center px-4 py-4 justify-between">
+        {!collapsed ? (
+          <>
+            <Image src="/logo.svg" alt="bato.ai" width={100} height={28} />
+            <HoverButton
+              onClick={() => onCollapsedChange(true)}
+              tooltip="Close sidebar"
             />
-          )}
-        </div>
-
-        {/* Dashboard */}
-        <div className="mt-2 flex flex-col items-start gap-1 px-2">
-          <SidebarItem
-            icon={<ChartLine size={18} />}
-            label="Dashboard"
-            collapsed={collapsed}
-            active={currentView === "dashboard"}
-            onClick={() => onViewChange("dashboard")}
+          </>
+        ) : (
+          <HoverButtonCollapsed
+            onClick={() => onCollapsedChange(false)}
+            tooltip="Open sidebar"
           />
-        </div>
+        )}
+      </div>
 
-        {/* Menu Items */}
-        <div className="mt-2 flex flex-col items-start gap-1 px-2">
-          {menuItems.map(({ label, icon: Icon, view }) => (
-            <SidebarItem
-              key={label}
-              icon={<Icon size={18} />}
-              label={label}
-              collapsed={collapsed}
-              active={currentView === view}
-              onClick={() => onViewChange(view)}
-            />
-          ))}
-        </div>
+      {/* Dashboard */}
+      <div className="mt-2 flex flex-col items-center gap-1 px-2">
+        <SidebarItem
+          icon={<ChartLine size={18} />}
+          label="Dashboard"
+          collapsed={collapsed}
+          active={currentView === "dashboard"}
+          onClick={() => onViewChange("dashboard")}
+        />
+      </div>
 
-        <div className="flex-1" />
-      </aside>
-    </>
+      {/* Menu Items */}
+      <div className="mt-2 flex flex-col items-center gap-1 px-2">
+        {menuItems.map(({ label, icon: Icon, view }) => (
+          <SidebarItem
+            key={label}
+            icon={<Icon size={18} />}
+            label={label}
+            collapsed={collapsed}
+            active={currentView === view}
+            onClick={() => onViewChange(view)}
+          />
+        ))}
+      </div>
+
+      <div className="flex-1" />
+    </aside>
   );
 }
 
@@ -112,7 +101,7 @@ function SidebarItem({
   onClick?: () => void;
 }) {
   return (
-    <div className="relative group w-full">
+    <div className="relative group w-full flex justify-center">
       <button
         onClick={onClick}
         className={clsx(

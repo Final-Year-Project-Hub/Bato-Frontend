@@ -14,7 +14,6 @@ import Logo from "@/components/Logo";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { toast } from "sonner";
-// import Cookies from "js-cookie";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -29,6 +28,29 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
+  // Helper function to provide better error descriptions
+  const getErrorDescription = (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes("email") && lowerMessage.includes("not found")) {
+      return "This email is not registered";
+    }
+    if (lowerMessage.includes("password") && lowerMessage.includes("incorrect")) {
+      return "Please check your password and try again";
+    }
+    if (lowerMessage.includes("invalid credentials")) {
+      return "Email or password is incorrect";
+    }
+    if (lowerMessage.includes("account") && lowerMessage.includes("disabled")) {
+      return "Your account has been disabled";
+    }
+    if (lowerMessage.includes("verify") || lowerMessage.includes("verification")) {
+      return "Please verify your email first";
+    }
+    
+    return "";
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
     const toastId = toast.loading("Signing you in...");
 
@@ -42,14 +64,11 @@ export default function LoginForm() {
       });
 
       if (res.success) {
-        toast.success("Login successful ", {
+        toast.success("Login successful", {
           id: toastId,
           description: "Welcome back to bato.ai",
           duration: 2500,
         });
-        // if (res.data.accessToken) {
-        //   Cookies.set("token", res.data.accessToken, { expires: 7 }); // 7 days
-        // }
 
         await refresh();
 
@@ -57,14 +76,23 @@ export default function LoginForm() {
           router.push("/chat");
         }, 800);
       } else {
-        toast.error(res.message || "Invalid email or password ", {
+        // Show specific error message from backend
+        const errorMessage = res.message || "Login failed";
+        
+        toast.error(errorMessage, {
           id: toastId,
+          description: getErrorDescription(errorMessage),
         });
       }
-    } catch (error) {
-      toast.error("Server error ", {
+    } catch (error: any) {
+      // Handle network errors or unexpected errors
+      const errorMessage = error?.message || "Unable to connect to server";
+      
+      toast.error("Couldn't login", {
         id: toastId,
-        description: "Please try again later",
+        description: errorMessage.includes("fetch") 
+          ? "Please check your internet connection" 
+          : errorMessage,
       });
 
       console.error("Login error:", error);
