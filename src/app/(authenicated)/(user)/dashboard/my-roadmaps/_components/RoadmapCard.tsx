@@ -76,13 +76,18 @@ export const RoadmapCard = ({
                          rounded-lg shadow-xl z-50 overflow-hidden"
             >
               {/*  Use router.push here */}
-              <button
-                onClick={() => router.push(`/dashboard/roadmap/${id}`)}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-grey transition"
-              >
-                <Map className="w-4 h-4 text-primary" />
-                View Full Roadmap
-              </button>
+           {id && (
+  <button
+    onClick={() => {
+      console.log("roadmapId click =", id);
+      router.push(`/dashboard/my-roadmaps/${encodeURIComponent(id)}`);
+    }}
+    className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-grey transition"
+  >
+    <Map className="w-4 h-4 text-primary" />
+    View Full Roadmap
+  </button>
+)}
 
               <div className="h-px bg-border" />
 
