@@ -1,5 +1,3 @@
-
-
 export type ActivityItem = {
   id: string;
   title: string;

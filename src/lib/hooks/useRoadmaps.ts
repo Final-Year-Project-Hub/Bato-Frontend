@@ -37,15 +37,9 @@ export const useRoadmaps = () => {
         return;
       }
 
-      //  NORMALIZE ONCE
-      const list: Roadmap[] =
-        Array.isArray(response) ? response :
-        Array.isArray(response.data) ? response.data :
-        Array.isArray(response.data?.roadmaps) ? response.data.roadmaps :
-        [];
-
-      setRoadmaps(list);
-    } catch (err) {
+      // ✅ FIX: Extract data array from response
+      setRoadmaps(response.data || []);
+    } catch (err: unknown) {
       console.error("Error fetching roadmaps:", err);
       setError("Failed to fetch roadmaps");
     } finally {
