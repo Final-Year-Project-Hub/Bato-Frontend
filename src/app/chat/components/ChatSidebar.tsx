@@ -99,7 +99,7 @@ export default function ChatSidebar() {
     <>
       <aside
         className={clsx(
-          "h-screen bg-background border-r border-border flex flex-col transition-all duration-300 overflow-hidden",
+          "h-screen bg-background/10 border-r border-border flex flex-col transition-all duration-300 overflow-hidden",
           collapsed ? "w-16" : "w-75",
         )}
       >

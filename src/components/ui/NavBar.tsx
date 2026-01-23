@@ -15,7 +15,7 @@ export interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { name: "Home", href: "/" },
+  { name: "Home", scrollTo: "home" },
   { name: "Features", scrollTo: "features" },
 
   { name: "How It Works", scrollTo: "how-it-works" },
@@ -58,7 +58,10 @@ export default function NavBar() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <button className="text-foreground" onClick={() => setMobileOpen(true)}>
+          <button
+            className="text-foreground"
+            onClick={() => setMobileOpen(true)}
+          >
             <Menu />
           </button>
         </div>
@@ -104,7 +107,7 @@ export default function NavBar() {
                     >
                       {item.name}
                     </Link>
-                  )
+                  ),
                 )}
               </div>
             </div>
@@ -133,7 +136,7 @@ export default function NavBar() {
                 key={item.name}
                 onClick={() => handleNavClick(item)}
                 className={cn(
-                  "block rounded-lg p-2 text-foreground hover:text-primary"
+                  "block rounded-lg p-2 text-foreground hover:text-primary",
                 )}
               >
                 {item.name}
@@ -143,12 +146,12 @@ export default function NavBar() {
                 key={item.name}
                 href={item.href ?? "#"}
                 className={cn(
-                  "block rounded-lg p-2 text-foreground hover:text-primary"
+                  "block rounded-lg p-2 text-foreground hover:text-primary",
                 )}
               >
                 {item.name}
               </Link>
-            )
+            ),
           )}
         </div>
 

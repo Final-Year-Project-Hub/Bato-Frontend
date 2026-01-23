@@ -35,7 +35,7 @@ export function OtpDialog({
   useEffect(() => {
     if (!open) return;
 
-    const timeout = setTimeout(() => setOtpTimer(30), 0);
+    const timeout = setTimeout(() => setOtpTimer(60), 0);
 
     timerRef.current = setInterval(() => {
       setOtpTimer((prev) => {
@@ -58,7 +58,7 @@ export function OtpDialog({
 
     onResend();
     setOtp("");
-    setOtpTimer(30);
+    setOtpTimer(60);
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
@@ -149,7 +149,6 @@ export function OtpDialog({
           <div className="text-center mt-2">
             <button
               onClick={handleResend}
-              disabled={otpTimer > 0}
               className={`font-medium ${
                 otpTimer > 0
                   ? "text-white/50 cursor-not-allowed"

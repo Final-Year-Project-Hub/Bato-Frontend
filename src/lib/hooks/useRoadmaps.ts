@@ -67,7 +67,7 @@ export const useRoadmaps = () => {
 
   // Debug logging whenever roadmaps change
   useEffect(() => {
-    console.log("🔄 Roadmaps state updated:", roadmaps);
+    console.log(" Roadmaps state updated:", roadmaps);
   }, [roadmaps]);
 
   return { roadmaps, loading, error, refetch: fetchRoadmaps };

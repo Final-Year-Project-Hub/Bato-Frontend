@@ -15,7 +15,6 @@ type ViewType = "dashboard" | "settings" | "roadmaps" | "chat";
 
 const menuItems = [
   { label: "My Roadmaps", icon: Waypoints, view: "roadmaps" as ViewType },
-  { label: "Create Roadmap", icon: Plus, view: "chat" as ViewType },
   { label: "Chat", icon: MessageCircle, view: "chat" as ViewType },
   { label: "Settings", icon: Settings, view: "settings" as ViewType },
 ];
@@ -35,7 +34,7 @@ export default function SideBar({
     <aside
       className={clsx(
         "h-screen bg-background border-r border-white/5 flex flex-col transition-all duration-300 overflow-hidden",
-        collapsed ? "w-16" : "w-72"
+        collapsed ? "w-16" : "w-72",
       )}
     >
       {/* Header */}
@@ -107,10 +106,8 @@ function SidebarItem({
         className={clsx(
           "flex items-center w-full rounded-md transition",
           "text-foreground text-[14px]",
-          collapsed
-            ? "justify-center h-10"
-            : "gap-3 px-3 py-2 justify-start",
-          active ? "bg-primary/10 text-primary" : "hover:bg-grey"
+          collapsed ? "justify-center h-10" : "gap-3 px-3 py-2 justify-start",
+          active ? "bg-primary/10 text-primary" : "hover:bg-grey",
         )}
       >
         <span>{icon}</span>
