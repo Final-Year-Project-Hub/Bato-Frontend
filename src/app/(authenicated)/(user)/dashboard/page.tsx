@@ -17,7 +17,7 @@ import {
 import { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import {RoadmapCard} from "./my-roadmaps/_components/RoadmapCard";
+import { RoadmapCard } from "./my-roadmaps/_components/RoadmapCard";
 import Activity, { ActivityItem } from "./_components/Activity";
 import { useRoadmaps } from "@/lib/hooks/useRoadmaps";
 
@@ -34,31 +34,35 @@ type Stat = {
 // Helper function to get icon based on roadmap title
 const getIconForTitle = (title: string): LucideIcon => {
   const lowerTitle = title.toLowerCase();
-  
-  if (lowerTitle.includes('react')) return Code2;
-  if (lowerTitle.includes('node') || lowerTitle.includes('backend')) return Database;
-  if (lowerTitle.includes('python') || lowerTitle.includes('ai')) return Brain;
-  if (lowerTitle.includes('mobile')) return Smartphone;
-  if (lowerTitle.includes('full stack') || lowerTitle.includes('web')) return Globe;
-  if (lowerTitle.includes('machine learning') || lowerTitle.includes('ml')) return Cpu;
-  if (lowerTitle.includes('cloud')) return Cloud;
-  if (lowerTitle.includes('security') || lowerTitle.includes('cyber')) return Lock;
-  if (lowerTitle.includes('data')) return LineChart;
-  
+
+  if (lowerTitle.includes("react")) return Code2;
+  if (lowerTitle.includes("node") || lowerTitle.includes("backend"))
+    return Database;
+  if (lowerTitle.includes("python") || lowerTitle.includes("ai")) return Brain;
+  if (lowerTitle.includes("mobile")) return Smartphone;
+  if (lowerTitle.includes("full stack") || lowerTitle.includes("web"))
+    return Globe;
+  if (lowerTitle.includes("machine learning") || lowerTitle.includes("ml"))
+    return Cpu;
+  if (lowerTitle.includes("cloud")) return Cloud;
+  if (lowerTitle.includes("security") || lowerTitle.includes("cyber"))
+    return Lock;
+  if (lowerTitle.includes("data")) return LineChart;
+
   return Code2; // Default
 };
 
 // Color gradients
 const colorGradients = [
-  'bg-gradient-to-br from-blue-500 to-blue-600',
-  'bg-gradient-to-br from-green-500 to-green-600',
-  'bg-gradient-to-br from-purple-500 to-purple-600',
-  'bg-gradient-to-br from-pink-500 to-pink-600',
-  'bg-gradient-to-br from-orange-500 to-orange-600',
-  'bg-gradient-to-br from-indigo-500 to-indigo-600',
-  'bg-gradient-to-br from-cyan-500 to-cyan-600',
-  'bg-gradient-to-br from-red-500 to-red-600',
-  'bg-gradient-to-br from-teal-500 to-teal-600',
+  "bg-gradient-to-br from-blue-500 to-blue-600",
+  "bg-gradient-to-br from-green-500 to-green-600",
+  "bg-gradient-to-br from-purple-500 to-purple-600",
+  "bg-gradient-to-br from-pink-500 to-pink-600",
+  "bg-gradient-to-br from-orange-500 to-orange-600",
+  "bg-gradient-to-br from-indigo-500 to-indigo-600",
+  "bg-gradient-to-br from-cyan-500 to-cyan-600",
+  "bg-gradient-to-br from-red-500 to-red-600",
+  "bg-gradient-to-br from-teal-500 to-teal-600",
 ];
 
 function TopBox({ stat }: { stat: Stat }) {
@@ -75,7 +79,9 @@ function TopBox({ stat }: { stat: Stat }) {
         </div>
       </div>
 
-      <div className={`h-10 w-10 rounded-sm grid place-items-center ${iconWrapClass}`}>
+      <div
+        className={`h-10 w-10 rounded-sm grid place-items-center ${iconWrapClass}`}
+      >
         <Icon className={`h-5 w-5 ${iconClass}`} />
       </div>
     </div>
@@ -87,7 +93,7 @@ export default function Page() {
 
   // Calculate stats based on actual data
   const activeRoadmaps = roadmaps?.length || 0;
-  
+
   const STATS: Stat[] = [
     {
       id: "active-roadmaps",
@@ -111,6 +117,7 @@ export default function Page() {
 
   return (
     <main className="my-container space-y-5 pb-10">
+
       {/* STATS */}
       <div className="grid grid-cols-4 gap-5">
         {STATS.map((stat) => (
@@ -136,11 +143,9 @@ export default function Page() {
             Loading roadmaps...
           </p>
         )}
-        
+
         {error && (
-          <p className="text-red-500 col-span-full text-center py-8">
-            {error}
-          </p>
+          <p className="text-red-500 col-span-full text-center py-8">{error}</p>
         )}
 
         {!loading && !error && roadmaps && roadmaps.length === 0 && (
@@ -161,16 +166,16 @@ export default function Page() {
           roadmaps.slice(0, 4).map((roadmap, index) => {
             const icon = getIconForTitle(roadmap.title);
             const color = colorGradients[index % colorGradients.length];
-            
+
             // Calculate estimated hours based on proficiency
             const estimatedHours =
               roadmap.proficiency === "beginner"
                 ? 150
                 : roadmap.proficiency === "intermediate"
-                ? 100
-                : roadmap.proficiency === "advanced"
-                ? 80
-                : 120;
+                  ? 100
+                  : roadmap.proficiency === "advanced"
+                    ? 80
+                    : 120;
 
             return (
               <RoadmapCard

@@ -87,10 +87,13 @@ export default function ChatSidebar() {
 
   const chatTitles = useMemo(() => chats.map((c) => c.title), [chats]);
 
-  const onSelectChatTitle = useCallback((title: string) => {
-    const found = chats.find((c) => c.title === title);
-    if (found) router.push(`/chat/${found.id}`);
-  }, [chats, router]);
+  const onSelectChatTitle = useCallback(
+    (title: string) => {
+      const found = chats.find((c) => c.title === title);
+      if (found) router.push(`/chat/${found.id}`);
+    },
+    [chats, router],
+  );
 
   return (
     <>
@@ -137,6 +140,12 @@ export default function ChatSidebar() {
             label="Search Chat"
             collapsed={collapsed}
             onClick={() => setOpenSearch(true)}
+          />
+          <SidebarItem
+            icon={<GitBranch size={18} />}
+            label="Roadmaps"
+            collapsed={collapsed}
+            onClick={() => router.push("/dashboard/my-roadmaps")}
           />
         </div>
 
@@ -185,7 +194,7 @@ export default function ChatSidebar() {
         </div>
 
         {/* ✅ Roadmaps pinned at bottom */}
-        <div className="border-t border-border pt-3 pb-4">
+        {/* <div className="border-t border-border pt-3 pb-4">
           {!collapsed && (
             <p className="px-4 text-foreground text-[14px] font-medium transition-colors">
               Roadmaps
@@ -210,7 +219,7 @@ export default function ChatSidebar() {
               ))
             )}
           </div>
-        </div>
+        </div> */}
       </aside>
 
       <SearchChatModal
@@ -246,7 +255,7 @@ function SidebarLinkItem({
           "flex items-center w-full rounded-md transition-colors",
           "text-foreground text-[14px]",
           "gap-3 px-3 py-2 justify-start",
-          isActive ? "bg-muted" : "hover:bg-muted/50"
+          isActive ? "bg-muted" : "hover:bg-muted/50",
         )}
       >
         <span>{icon}</span>

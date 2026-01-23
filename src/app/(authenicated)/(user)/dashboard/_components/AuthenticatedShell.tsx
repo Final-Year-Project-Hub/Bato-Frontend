@@ -1,27 +1,28 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AuthNav from "@/components/ui/AuthNav";
 import SideBar from "./SideBar";
-import SettingsView from "../settings/_components/SettingsView";
-import RoadmapsPage from "../my-roadmaps/page";
 
 type ViewType = "dashboard" | "settings" | "roadmaps" | "chat";
 
-export default function AuthenticatedShell({ children }: { children: ReactNode }) {
+export default function AuthenticatedShell({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  const getCurrentView = (): ViewType => {
-    if (pathname?.includes("/my-roadmaps")) return "roadmaps";
-    if (pathname?.includes("/settings")) return "settings";
-    if (pathname?.includes("/chat")) return "chat";
+  // Use view ONLY for sidebar highlight, NOT for overriding route rendering
+  const currentView: ViewType = useMemo(() => {
+    if (pathname?.startsWith("/dashboard/my-roadmaps")) return "roadmaps";
+    if (pathname?.startsWith("/dashboard/settings")) return "settings";
+    if (pathname?.startsWith("/chat")) return "chat";
     return "dashboard";
-  };
-
-  const currentView = getCurrentView();
+  }, [pathname]);
 
   const handleViewChange = (view: ViewType) => {
     if (view === "settings") router.push("/dashboard/settings");
@@ -57,13 +58,8 @@ export default function AuthenticatedShell({ children }: { children: ReactNode }
           collapsed ? "lg:pl-16" : "lg:pl-72"
         }`}
       >
-        {currentView === "settings" ? (
-          <SettingsView />
-        ) : currentView === "roadmaps" ? (
-          <RoadmapsPage />
-        ) : (
-          <>{children}</>
-        )}
+        {/* ✅ Always render the actual route */}
+        {children}
       </main>
     </div>
   );
