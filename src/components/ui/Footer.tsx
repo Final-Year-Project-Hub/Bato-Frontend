@@ -4,7 +4,7 @@ import { Instagram, Mail, Phone, Send } from "lucide-react";
 import Link from "next/link";
 
 const navLinks = [
-  { href: "/about", label: "About us" },
+  { href: "/about-us", label: "About us" },
   { href: "/home", label: "Home" },
   { href: "/", label: "How It Works" },
   { href: "/contact", label: "Contact us" },
