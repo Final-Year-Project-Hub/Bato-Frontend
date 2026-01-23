@@ -10,11 +10,11 @@ export default function Home() {
         <Hero />
       </section>
 
-      <section id="features">
+      <section id="features" className="scroll-mt-25">
         <Features />
       </section>
 
-      <section id="how-it-works">
+      <section id="how-it-works" className="scroll-mt-25">
         <HowItWorks />
       </section>
 

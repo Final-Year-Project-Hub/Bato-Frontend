@@ -37,7 +37,7 @@ export const RoadmapCard = ({
       transition={{ duration: 0.45, delay: index * 0.08 }}
       whileHover={{ y: -6, scale: 1.015 }}
       onMouseLeave={() => setOpen(false)}
-      className="group relative bg-background rounded-3xl border border-border overflow-visible hover:shadow-2xl transition"
+      className="group relative bg-background rounded-xl border border-border overflow-visible hover:shadow-2xl transition"
     >
       {/* Glow */}
       <div
@@ -76,26 +76,30 @@ export const RoadmapCard = ({
                          rounded-lg shadow-xl z-50 overflow-hidden"
             >
               {/*  Use router.push here */}
-           {id && (
-  <button
-    onClick={() => {
-      console.log("roadmapId click =", id);
-      router.push(`/dashboard/my-roadmaps/${encodeURIComponent(id)}`);
-    }}
-    className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-grey transition"
-  >
-    <Map className="w-4 h-4 text-primary" />
-    View Full Roadmap
-  </button>
-)}
+              {id && (
+                <button
+                  onClick={() => {
+                    console.log("roadmapId click =", id);
+                    router.push(
+                      `/dashboard/my-roadmaps/${encodeURIComponent(id)}`,
+                    );
+                  }}
+                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-grey transition"
+                >
+                  <Map className="w-4 h-4 text-primary" />
+                  View Full Roadmap
+                </button>
+              )}
 
               <div className="h-px bg-border" />
 
               <button
-                onClick={() => router.push(`/dashboard/my-roadmaps/tracker?roadmap=${id}`)}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-grey transition"
+                onClick={() =>
+                  router.push(`/dashboard/my-roadmaps/tracker?roadmap=${id}`)
+                }
+                className="w-full text-left flex items-center gap-2 px- py-2 text-sm hover:bg-grey transition"
               >
-                <BarChart3 className="w-4 h-4 text-primary" />
+                <BarChart3 className="w-4 h-4 ml-3 text-primary" />
                 Progress Tracker
               </button>
             </motion.div>
@@ -104,14 +108,14 @@ export const RoadmapCard = ({
       </div>
 
       {/* Card Content */}
-      <div className="relative p-8">
+      <div className="relative p-6">
         <div
-          className={`w-20 h-20 ${color} rounded-2xl flex items-center justify-center mb-6 shadow-xl`}
+          className={`w-15 h-15  ${color} rounded-lg flex items-center justify-center mb-6 shadow-xl`}
         >
-          <Icon className="w-10 h-10 text-white" />
+          <Icon className="w-7 h-7 text-white" />
         </div>
 
-        <h3 className="text-2xl font-bold mb-3">{title}</h3>
+        <h3 className="text-lg font-bold mb-3">{title}</h3>
 
         <p className="text-sm text-foreground/70 mb-6 min-h-12">
           {description}

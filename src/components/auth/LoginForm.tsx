@@ -48,11 +48,14 @@ export default function LoginForm() {
   // Helper function to provide better error descriptions
   const getErrorDescription = (message: string): string => {
     const lowerMessage = message.toLowerCase();
-    
+
     if (lowerMessage.includes("email") && lowerMessage.includes("not found")) {
       return "This email is not registered";
     }
-    if (lowerMessage.includes("password") && lowerMessage.includes("incorrect")) {
+    if (
+      lowerMessage.includes("password") &&
+      lowerMessage.includes("incorrect")
+    ) {
       return "Please check your password and try again";
     }
     if (lowerMessage.includes("invalid credentials")) {
@@ -61,10 +64,13 @@ export default function LoginForm() {
     if (lowerMessage.includes("account") && lowerMessage.includes("disabled")) {
       return "Your account has been disabled";
     }
-    if (lowerMessage.includes("verify") || lowerMessage.includes("verification")) {
+    if (
+      lowerMessage.includes("verify") ||
+      lowerMessage.includes("verification")
+    ) {
       return "Please verify your email first";
     }
-    
+
     return "";
   };
 
@@ -72,13 +78,13 @@ export default function LoginForm() {
     const toastId = toast.loading("Signing you in...");
 
     try {
-      const res = await apiFetch("/auth/login", {
+      const res = (await apiFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify({
           email: data.email,
           password: data.password,
         }),
-      }) as LoginResponse;
+      })) as LoginResponse;
 
       if (res.success) {
         toast.success("Login successful", {
@@ -87,12 +93,21 @@ export default function LoginForm() {
           duration: 2500,
         });
 
+        // IMPORTANT: set cookies on localhost so middleware can read them
+        await fetch("/api/session/set", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            accessToken: res.data?.accessToken,
+            refreshToken: res.data?.refreshToken,
+          }),
+        });
+
         // Refresh auth state to get user data
         await refresh();
 
-        // Determine redirect based on user role
         const userRole = res.data?.user?.role || res.data?.role;
-        
+
         setTimeout(() => {
           if (userRole === "admin" || userRole === "ADMIN") {
             router.push("/admin");
@@ -103,7 +118,7 @@ export default function LoginForm() {
       } else {
         // Show specific error message from backend
         const errorMessage = res.message || "Login failed";
-        
+
         toast.error(errorMessage, {
           id: toastId,
           description: getErrorDescription(errorMessage),
@@ -113,11 +128,11 @@ export default function LoginForm() {
       // Handle network errors or unexpected errors
       const err = error as Error;
       const errorMessage = err?.message || "Unable to connect to server";
-      
+
       toast.error("Couldn't login", {
         id: toastId,
-        description: errorMessage.includes("fetch") 
-          ? "Please check your internet connection" 
+        description: errorMessage.includes("fetch")
+          ? "Please check your internet connection"
           : errorMessage,
       });
 

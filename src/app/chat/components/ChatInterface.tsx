@@ -87,6 +87,7 @@ export default function ChatInterface({
       const res = await apiFetch("/auth/logout", {
         method: "POST",
       });
+      await fetch("/api/session/clear", { method: "POST" });
 
       if (res.success) {
         toast.success("Logged out successfully ", {
@@ -109,6 +110,7 @@ export default function ChatInterface({
       }
     } catch (error) {
       console.error("Logout error:", error);
+      await fetch("/api/session/clear", { method: "POST" });
 
       await auth.refresh();
       setShowLogout(false);
@@ -558,7 +560,7 @@ export default function ChatInterface({
         </button>
 
         {openMenu && (
-          <div className="absolute right-0 mt-10 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
+          <div className="absolute right-0 mt-30 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
             <button
               onClick={() => router.push("./dashboard")}
               className="w-full px-4 py-2 flex gap-2 text-sm text-white/80 hover:bg-white/5"

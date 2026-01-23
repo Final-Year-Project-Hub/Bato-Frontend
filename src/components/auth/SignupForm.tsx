@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
-
+import Background from "@/../public/images/roadmap.png";
 import { OtpDialog } from "@/components/auth/OtpDialog";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
@@ -48,14 +48,14 @@ export default function SignupForm() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-
+      console.log(result);
       const shouldOpenOtp =
         result?.success === true &&
         typeof result?.data?.id === "string" &&
         typeof result?.data?.email === "string";
 
       if (shouldOpenOtp) {
-        toast.success("Account created ", {
+        toast.success("Account created!", {
           id: toastId,
           description: "OTP sent to your email",
         });
@@ -109,7 +109,7 @@ export default function SignupForm() {
         });
       }
     } catch (error) {
-      toast.error("OTP verification failed ⚠️", {
+      toast.error("OTP verification failed!", {
         id: toastId,
       });
       console.error(error);
@@ -129,7 +129,7 @@ export default function SignupForm() {
         }),
       });
 
-      toast.success("OTP resent 📩", {
+      toast.success("OTP resent", {
         id: toastId,
         description: res.message,
       });
@@ -148,15 +148,17 @@ export default function SignupForm() {
         className="absolute inset-0"
         style={{
           backgroundImage: `
-            linear-gradient(
-              rgba(0, 0, 0, 0.7),
-              rgba(0, 0, 0, 0.7)
-            ),
-            url('/images/path.png')
-          `,
+      linear-gradient(
+        rgba(0, 0, 0, 0.7),
+        rgba(0, 0, 0, 0.7)
+      ),
+      url('/images/path.png')
+    `,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
+          filter: "blur(5px)",
+          transform: "scale(1.05)", // prevents edge clipping
         }}
       />
 
@@ -190,9 +192,9 @@ export default function SignupForm() {
                   className="h-10 mt-1 bg-grey border-border text-foreground placeholder:text-muted-foreground"
                 />
                 {errors.name && (
-                  <span className="absolute -bottom-4 text-xs text-red-400">
+                  <p className="absolute mt-1 text-xs text-red-400">
                     {errors.name.message}
-                  </span>
+                  </p>
                 )}
               </div>
 
@@ -205,9 +207,9 @@ export default function SignupForm() {
                   className="h-10 mt-1 bg-grey border-border text-foreground placeholder:text-muted-foreground"
                 />
                 {errors.email && (
-                  <span className="absolute -bottom-4 text-xs text-red-400">
+                  <p className="absolute mt-1 text-xs text-red-400">
                     {errors.email.message}
-                  </span>
+                  </p>
                 )}
               </div>
 
@@ -227,14 +229,14 @@ export default function SignupForm() {
                   {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
                 {errors.password && (
-                  <span className="absolute -bottom-4 text-xs text-red-400">
+                  <p className="absolute mt-1 text-xs text-red-400">
                     {errors.password.message}
-                  </span>
+                  </p>
                 )}
               </div>
 
               {/* CONFIRM PASSWORD */}
-              <div className="relative">
+              <div className="relative ">
                 <label className="text-sm text-foreground">
                   Confirm Password
                 </label>
@@ -251,9 +253,9 @@ export default function SignupForm() {
                   {showConfirm ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
                 {errors.confirmPassword && (
-                  <span className="absolute -bottom-4 text-xs text-red-400">
+                  <p className="absolute mt-1 text-xs text-red-400">
                     {errors.confirmPassword.message}
-                  </span>
+                  </p>
                 )}
               </div>
 

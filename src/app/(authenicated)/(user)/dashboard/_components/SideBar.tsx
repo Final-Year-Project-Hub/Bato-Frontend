@@ -8,14 +8,20 @@ import {
   Settings,
   MessageCircle,
   Plus,
+  LogOut,
 } from "lucide-react";
 import clsx from "clsx";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/app/features/auth/hooks/useAuth";
+import { useState } from "react";
+import LogoutModal from "@/app/chat/components/LogoutModal";
+import { apiFetch } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 type ViewType = "dashboard" | "settings" | "roadmaps" | "chat";
 
 const menuItems = [
   { label: "My Roadmaps", icon: Waypoints, view: "roadmaps" as ViewType },
-  { label: "Create Roadmap", icon: Plus, view: "chat" as ViewType },
   { label: "Chat", icon: MessageCircle, view: "chat" as ViewType },
   { label: "Settings", icon: Settings, view: "settings" as ViewType },
 ];
@@ -31,11 +37,44 @@ export default function SideBar({
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
 }) {
+  const [showLogout, setShowLogout] = useState(false);
+  const router = useRouter();
+
+  const auth = useAuth();
+  console.log("auth user", auth);
+  const userId = auth.user?.id;
+  const email = auth.user?.email || "";
+  const displayName = auth.user?.name || auth.user?.email || "User";
+  const initial = (displayName?.trim()?.[0] || "U").toUpperCase();
+
+  const handleLogout = async () => {
+    try {
+      // backend logout
+      await apiFetch("/auth/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Backend logout failed (continuing):", e);
+    }
+
+    try {
+      // clear localhost cookies used by middleware
+      await fetch("/api/session/clear", { method: "POST" });
+    } catch (e) {
+      console.error("Local cookie clear failed:", e);
+    }
+
+    //  update auth UI state
+    await auth.refresh();
+
+    // hard redirect so no cached protected UI remains
+    router.replace("/login");
+    router.refresh();
+  };
+
   return (
     <aside
       className={clsx(
         "h-screen bg-background border-r border-white/5 flex flex-col transition-all duration-300 overflow-hidden",
-        collapsed ? "w-16" : "w-72"
+        collapsed ? "w-16" : "w-72",
       )}
     >
       {/* Header */}
@@ -82,6 +121,43 @@ export default function SideBar({
       </div>
 
       <div className="flex-1" />
+      <div className="w-full border-t border-grey px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          {/* Left: avatar + info */}
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Initial circle */}
+            <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+              {initial}
+            </div>
+
+            {/* Name + email */}
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {auth.user?.name ?? "User"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">{email}</p>
+            </div>
+          </div>
+
+          {/* Right: logout */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowLogout(true)}
+            className="text-white hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+          <LogoutModal
+            open={showLogout}
+            onClose={() => setShowLogout(false)}
+            onConfirm={async () => {
+              setShowLogout(false);
+              await handleLogout();
+            }}
+          />
+        </div>
+      </div>
     </aside>
   );
 }
@@ -107,10 +183,8 @@ function SidebarItem({
         className={clsx(
           "flex items-center w-full rounded-md transition",
           "text-foreground text-[14px]",
-          collapsed
-            ? "justify-center h-10"
-            : "gap-3 px-3 py-2 justify-start",
-          active ? "bg-primary/10 text-primary" : "hover:bg-grey"
+          collapsed ? "justify-center h-10" : "gap-3 px-3 py-2 justify-start",
+          active ? "bg-primary/10 text-primary" : "hover:bg-grey",
         )}
       >
         <span>{icon}</span>

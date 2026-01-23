@@ -8,12 +8,16 @@ interface LogoutModalProps {
   onConfirm: () => void;
 }
 
-export default function LogoutModal({ open, onClose, onConfirm }: LogoutModalProps) {
+export default function LogoutModal({
+  open,
+  onClose,
+  onConfirm,
+}: LogoutModalProps) {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="relative w-90 rounded-xl bg-[#2A2A2A] border border-white/10 p-6">
+      <div className="relative w-90 rounded-lg bg-[#2A2A2A] border border-white/10 p-4">
         {/* Close Icon */}
         <button
           onClick={onClose}
@@ -32,14 +36,14 @@ export default function LogoutModal({ open, onClose, onConfirm }: LogoutModalPro
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm bg-white/5 text-white hover:bg-white/10"
+            className="px-4 py-2 rounded-lg text-sm bg-white/5 text-white hover:bg-white/10 cursor-pointer"
           >
             No
           </button>
 
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-lg text-sm bg-[#eb4637] text-[#ffffff] font-medium hover:opacity-90"
+            className="px-4 py-2 rounded-lg text-sm bg-[#eb4637] text-[#ffffff] font-medium hover:opacity-90 cursor-pointer"
           >
             Yes
           </button>

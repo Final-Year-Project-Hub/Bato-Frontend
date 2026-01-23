@@ -8,8 +8,8 @@ export function useHealth() {
 
   const checkHealth = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      const res = await fetch(`${apiUrl}/api/roadmap/health`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_AI_URL || "";
+      const res = await fetch(`${apiUrl}/health`, {
         cache: "no-store",
         credentials: "include",
       });

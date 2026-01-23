@@ -9,12 +9,16 @@ import {
   GitBranch,
   PanelLeft,
   MessageSquare,
+  LogOut,
 } from "lucide-react";
 import clsx from "clsx";
 import SearchChatModal from "./SearchChatModal";
 import { useRouter, usePathname } from "next/navigation";
 import { useChat } from "@/lib/hooks/useChat";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import LogoutModal from "./LogoutModal";
+import { apiFetch } from "@/lib/api";
 
 const roadmaps = [
   "React Roadmap",
@@ -33,11 +37,16 @@ export default function ChatSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
   const [chats, setChats] = useState<ChatItem[]>([]);
+  const [showLogout, setShowLogout] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
 
   const auth = useAuth();
   const userId = auth.user?.id;
+  const email = auth.user?.email || "";
+  const displayName = auth.user?.name || auth.user?.email || "User";
+  const initial = (displayName?.trim()?.[0] || "U").toUpperCase();
 
   const { getChats } = useChat();
   const [isLoadingChats, setIsLoadingChats] = useState(false);
@@ -85,6 +94,29 @@ export default function ChatSidebar() {
     };
   }, [userId, getChats]);
 
+  const handleLogout = async () => {
+    try {
+      // backend logout
+      await apiFetch("/auth/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Backend logout failed (continuing):", e);
+    }
+
+    try {
+      // clear localhost cookies used by middleware
+      await fetch("/api/session/clear", { method: "POST" });
+    } catch (e) {
+      console.error("Local cookie clear failed:", e);
+    }
+
+    //  update auth UI state
+    await auth.refresh();
+
+    // hard redirect so no cached protected UI remains
+    router.replace("/login");
+    router.refresh();
+  };
+
   const chatTitles = useMemo(() => chats.map((c) => c.title), [chats]);
 
   const onSelectChatTitle = useCallback(
@@ -99,7 +131,7 @@ export default function ChatSidebar() {
     <>
       <aside
         className={clsx(
-          "h-screen bg-background border-r border-border flex flex-col transition-all duration-300 overflow-hidden",
+          "h-screen bg-background/10 border-r border-border flex flex-col transition-all duration-300 overflow-hidden",
           collapsed ? "w-16" : "w-75",
         )}
       >
@@ -156,7 +188,7 @@ export default function ChatSidebar() {
           </p>
         )}
 
-        {/* ✅ Scrollable chats area */}
+        {/* Scrollable chats area */}
         <div className="mt-2 px-2 flex-1 min-h-0 overflow-y-auto">
           {collapsed ? (
             <SidebarItem
@@ -193,7 +225,7 @@ export default function ChatSidebar() {
           )}
         </div>
 
-        {/* ✅ Roadmaps pinned at bottom */}
+        {/*  Roadmaps pinned at bottom */}
         {/* <div className="border-t border-border pt-3 pb-4">
           {!collapsed && (
             <p className="px-4 text-foreground text-[14px] font-medium transition-colors">
@@ -220,8 +252,47 @@ export default function ChatSidebar() {
             )}
           </div>
         </div> */}
-      </aside>
 
+        <div className="w-full border-t border-grey px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left: avatar + info */}
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Initial circle */}
+              <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                {initial}
+              </div>
+
+              {/* Name + email */}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {auth.user?.name ?? "User"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {email}
+                </p>
+              </div>
+            </div>
+
+            {/* Right: logout */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowLogout(true)}
+              className="text-white hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+            </Button>
+            <LogoutModal
+              open={showLogout}
+              onClose={() => setShowLogout(false)}
+              onConfirm={async () => {
+                setShowLogout(false);
+                await handleLogout();
+              }}
+            />
+          </div>
+        </div>
+      </aside>
       <SearchChatModal
         open={openSearch}
         chats={chatTitles}
