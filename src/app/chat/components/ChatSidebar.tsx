@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   SquarePen,
   Search,
@@ -11,7 +12,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import SearchChatModal from "./SearchChatModal";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useChat } from "@/lib/hooks/useChat";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
 
@@ -33,6 +34,7 @@ export default function ChatSidebar() {
   const [openSearch, setOpenSearch] = useState(false);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const router = useRouter();
+  const pathname = usePathname();
 
   const auth = useAuth();
   const userId = auth.user?.id;
@@ -40,9 +42,15 @@ export default function ChatSidebar() {
   const { getChats } = useChat();
   const [isLoadingChats, setIsLoadingChats] = useState(false);
 
-  const handleNewChat = () => {
+  // Get current chat ID from pathname
+  const currentChatId = useMemo(() => {
+    const match = pathname?.match(/\/chat\/([^/]+)/);
+    return match?.[1] ?? null;
+  }, [pathname]);
+
+  const handleNewChat = useCallback(() => {
     router.push("/chat");
-  };
+  }, [router]);
 
   useEffect(() => {
     if (!userId) return;
@@ -75,14 +83,14 @@ export default function ChatSidebar() {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, getChats]);
 
   const chatTitles = useMemo(() => chats.map((c) => c.title), [chats]);
 
-  const onSelectChatTitle = (title: string) => {
+  const onSelectChatTitle = useCallback((title: string) => {
     const found = chats.find((c) => c.title === title);
     if (found) router.push(`/chat/${found.id}`);
-  };
+  }, [chats, router]);
 
   return (
     <>
@@ -163,12 +171,12 @@ export default function ChatSidebar() {
 
               <div className="space-y-1 pb-2">
                 {chats.map((c) => (
-                  <SidebarItem
+                  <SidebarLinkItem
                     key={c.id}
                     icon={<MessageSquare size={18} />}
                     label={c.title}
-                    collapsed={false}
-                    onClick={() => router.push(`/chat/${c.id}`)}
+                    href={`/chat/${c.id}`}
+                    isActive={currentChatId === c.id}
                   />
                 ))}
               </div>
@@ -213,6 +221,38 @@ export default function ChatSidebar() {
         onNewChat={handleNewChat}
       />
     </>
+  );
+}
+
+/* --- Link-based sidebar item for chats (prevents full page reload) --- */
+
+function SidebarLinkItem({
+  icon,
+  label,
+  href,
+  isActive,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  isActive?: boolean;
+}) {
+  return (
+    <div className="relative group w-full flex justify-center">
+      <Link
+        href={href}
+        prefetch={true}
+        className={clsx(
+          "flex items-center w-full rounded-md transition-colors",
+          "text-foreground text-[14px]",
+          "gap-3 px-3 py-2 justify-start",
+          isActive ? "bg-muted" : "hover:bg-muted/50"
+        )}
+      >
+        <span>{icon}</span>
+        <span className="truncate">{label}</span>
+      </Link>
+    </div>
   );
 }
 

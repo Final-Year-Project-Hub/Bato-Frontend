@@ -41,7 +41,7 @@ export default function SearchChatModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       {/* 🔲 Modal */}
       <div className="w-full max-w-xl h-[60vh] rounded-2xl bg-[#1E1E1E] shadow-xl flex flex-col">
-        {/* 🔍 Search + ❌ Close Row */}
+        {/* 🔍 Search +  Close Row */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-3">
           {/* 🔍 Search */}
           <div className="flex flex-1 items-center gap-2 rounded-full bg-[#2A2A2A] px-4 py-2">

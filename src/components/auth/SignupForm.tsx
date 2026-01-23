@@ -38,7 +38,7 @@ export default function SignupForm() {
 
     try {
       const payload = {
-        fullName: data.fullName,
+        name: data.name,
         email: data.email,
         password: data.password,
         confirmPassword: data.confirmPassword,
@@ -192,13 +192,13 @@ export default function SignupForm() {
               <div className="relative">
                 <label className="text-sm text-[#dbeafe]">Full Name</label>
                 <Input
-                  {...register("fullName")}
+                  {...register("name")}
                   placeholder="John Doe"
                   className="h-10 mt-1 bg-white/10 border-white/20 text-white"
                 />
-                {errors.fullName && (
+                {errors.name && (
                   <span className="absolute -bottom-4 text-xs text-red-400">
-                    {errors.fullName.message}
+                    {errors.name.message}
                   </span>
                 )}
               </div>

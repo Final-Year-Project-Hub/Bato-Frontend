@@ -1,6 +1,6 @@
- "use client";
+"use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   ArrowUp,
   User,
@@ -9,7 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import LogoutModal from "./LogoutModal";
@@ -34,7 +34,11 @@ const TITLES = [
   { normal: "Level Up Your ", highlight: "Skills Today!!" },
 ];
 
-export default function ChatInterface() {
+export default function ChatInterface({
+  initialChatId,
+}: {
+  initialChatId: string | null;
+}) {
   const [currentTitleIndex] = useState(0);
 
   const router = useRouter();
@@ -62,6 +66,9 @@ export default function ChatInterface() {
   const [typedLength, setTypedLength] = useState(0);
   const roadmapBufRef = useRef("");
   const roadmapModeRef = useRef(false);
+
+  // Track the last loaded chat ID to prevent duplicate fetches
+  const lastLoadedChatIdRef = useRef<string | null>(null);
 
   const { fullText, normalLength } = useMemo(() => {
     const safeIndex =
@@ -146,60 +153,17 @@ export default function ChatInterface() {
     }
   }, [messages, loading, isStreaming]);
 
-  const params = useParams<{ chatId?: string }>();
+  const looksLikeRoadmapJson = useCallback((raw: string) => {
+    const s = (raw || "").trim();
+    if (!s) return false;
 
-  useEffect(() => {
-    const idFromRoute = params?.chatId;
-    if (!idFromRoute || typeof idFromRoute !== "string") return;
+    if (s.startsWith("{") || s.startsWith("```json")) return true;
+    if (s.includes('"phases"') && s.includes('"title"')) return true;
 
-    // don't overwrite UI while you're streaming a reply
-    if (isStreaming || loading) return;
+    return false;
+  }, []);
 
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const res = await getMessages(idFromRoute);
-        if (cancelled) return;
-
-        if (res?.success && Array.isArray(res.data)) {
-          const mapped: ChatMsg[] = res.data.map((m: ChatMsg & { content: string }) => {
-            const rawContent = m.content ?? "";
-            const displayContent =
-              m.role === "assistant" && looksLikeRoadmapJson(rawContent)
-                ? formatRoadmapTitles(rawContent)
-                : rawContent;
-
-            return {
-              id: m.id,
-              role: m.role,
-              content: displayContent,
-              roadmapId: m.roadmapId,
-              createdAt: m.createdAt
-                ? new Date(m.createdAt).getTime()
-                : undefined,
-            };
-          });
-
-          setChatId(idFromRoute);
-          setMessages(mapped);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [params?.chatId, getMessages, isStreaming, loading]);
-
-  const uid = () =>
-    typeof crypto !== "undefined"
-      ? crypto.randomUUID()
-      : String(Date.now() + Math.random());
-
-  const formatRoadmapTitles = (raw: string) => {
+  const formatRoadmapTitles = useCallback((raw: string) => {
     const cleaned = (raw || "").replace(/```json|```/g, "");
 
     const safeMatch = (re: RegExp) => cleaned.match(re)?.[1];
@@ -303,17 +267,85 @@ export default function ChatInterface() {
     }
 
     return lines.join("\n").trimEnd();
-  };
+  }, []);
 
-  const looksLikeRoadmapJson = (raw: string) => {
-    const s = (raw || "").trim();
-    if (!s) return false;
+  // Single effect to handle chat loading based on initialChatId prop
+  useEffect(() => {
+    // Skip if no chat ID
+    if (!initialChatId) {
+      // Only reset if we're not currently in a chat session
+      // This prevents clearing messages when URL hasn't caught up yet
+      if (lastLoadedChatIdRef.current !== null && chatId === null) {
+        setMessages([]);
+        lastLoadedChatIdRef.current = null;
+      }
+      return;
+    }
 
-    if (s.startsWith("{") || s.startsWith("```json")) return true;
-    if (s.includes('"phases"') && s.includes('"title"')) return true;
+    // Skip if this is the chat we're currently working with (just created or already loaded)
+    if (initialChatId === chatId) {
+      lastLoadedChatIdRef.current = initialChatId;
+      return;
+    }
 
-    return false;
-  };
+    // Skip if already loaded this chat
+    if (initialChatId === lastLoadedChatIdRef.current) return;
+
+    // Skip if currently streaming/loading - don't interrupt active work
+    if (isStreaming || loading) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await getMessages(initialChatId);
+        if (cancelled) return;
+
+        if (res?.success && Array.isArray(res.data)) {
+          const mapped: ChatMsg[] = res.data.map((m: any) => {
+            const rawContent = m.content ?? "";
+            const displayContent =
+              m.role === "assistant" && looksLikeRoadmapJson(rawContent)
+                ? formatRoadmapTitles(rawContent)
+                : rawContent;
+
+            return {
+              id: m.id,
+              role: m.role,
+              content: displayContent,
+              roadmapId: m.roadmapId,
+              createdAt: m.createdAt
+                ? new Date(m.createdAt).getTime()
+                : undefined,
+            };
+          });
+
+          setChatId(initialChatId);
+          setMessages(mapped);
+          lastLoadedChatIdRef.current = initialChatId;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    initialChatId,
+    getMessages,
+    isStreaming,
+    loading,
+    chatId,
+    looksLikeRoadmapJson,
+    formatRoadmapTitles,
+  ]);
+
+  const uid = () =>
+    typeof crypto !== "undefined"
+      ? crypto.randomUUID()
+      : String(Date.now() + Math.random());
 
   const sendMessage = async () => {
     if (!message.trim() || loading || isStreaming) return;
@@ -351,6 +383,7 @@ export default function ChatInterface() {
 
     try {
       let currentChatId = chatId;
+      let isNewChat = false;
 
       if (!currentChatId) {
         const res = await startChat({
@@ -364,7 +397,8 @@ export default function ChatInterface() {
         if (!currentChatId) throw new Error("No chatId returned");
 
         setChatId(currentChatId);
-        router.replace(`/chat/${currentChatId}`);
+        lastLoadedChatIdRef.current = currentChatId; // Mark as loaded to prevent re-fetch
+        isNewChat = true;
       } else {
         await addMessage(currentChatId, { role: "user", content: text });
       }
@@ -435,9 +469,7 @@ export default function ChatInterface() {
 
         onError: (err) => {
           setMessages((prev) =>
-            prev.map((m) =>
-              m.id === thinkingId ? { ...m, content: err } : m,
-            ),
+            prev.map((m) => (m.id === thinkingId ? { ...m, content: err } : m)),
           );
         },
       });
@@ -451,6 +483,11 @@ export default function ChatInterface() {
           content: toSave,
           roadmapId,
         });
+
+        // Update URL after everything is saved (won't cause re-fetch due to lastLoadedChatIdRef)
+        if (isNewChat) {
+          window.history.replaceState(null, "", `/chat/${currentChatId}`);
+        }
       } else {
         setMessages((prev) =>
           prev.map((m) =>
@@ -470,6 +507,7 @@ export default function ChatInterface() {
       );
     } finally {
       setLoading(false);
+      setStreamingMessageId(null);
     }
   };
 
@@ -744,14 +782,20 @@ function ChatBubble({
         </div>
 
         {/* CTA BUTTON */}
-        <div className="pt-4 flex justify-end">
-          <button
-            onClick={() => router.push(`/dashboard/roadmap/${roadmapId}`)}
-            className="bg-[#E96559] hover:bg-[#E96559]/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition"
-          >
-            View Full Roadmap →
-          </button>
-        </div>
+        {roadmapId && (
+          <div className="pt-4 flex justify-end">
+            <button
+              onClick={() => {
+                console.log("roadmapId click =", roadmapId);
+                router.push(
+                  `/dashboard/my-roadmaps/${encodeURIComponent(roadmapId)}`,
+                );
+              }}
+            >
+              View Full Roadmap →
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -804,5 +848,4 @@ function ChatBubble({
       </div>
     </div>
   );
-} 
- 
+}
