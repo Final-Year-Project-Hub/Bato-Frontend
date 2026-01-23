@@ -17,7 +17,7 @@ export interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { name: "Home", href: "/" },
   { name: "Features", scrollTo: "features" },
-  { name: "About us", href: "/about-us" }, // Different page
+
   { name: "How It Works", scrollTo: "how-it-works" },
 ];
 
