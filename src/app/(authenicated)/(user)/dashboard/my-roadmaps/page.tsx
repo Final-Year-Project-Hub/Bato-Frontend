@@ -27,8 +27,8 @@ export default function RoadmapsPage() {
     return sum + hours;
   }, 0);
 
-  console.log("🏠 totalHours calculated:", totalHours);
-  console.log("🏠 Rendering RoadmapGrid with:", { roadmaps, loading, error });
+  console.log(" totalHours calculated:", totalHours);
+  console.log(" Rendering RoadmapGrid with:", { roadmaps, loading, error });
 
   return (
     <div className="min-h-screen bg-grey text-foreground font-sans">
