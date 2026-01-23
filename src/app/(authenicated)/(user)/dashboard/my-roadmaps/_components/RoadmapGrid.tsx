@@ -45,7 +45,7 @@ const colorGradients = [
   'bg-gradient-to-br from-teal-500 to-teal-600',
 ];
 
-// ✅ UPDATED: Accept props instead of using useRoadmaps hook
+//  UPDATED: Accept props instead of using useRoadmaps hook
 interface RoadmapsGridProps {
   roadmaps: Roadmap[];
   loading: boolean;

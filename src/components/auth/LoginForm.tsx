@@ -15,6 +15,23 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { toast } from "sonner";
 
+// Define proper response type
+interface LoginResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    accessToken: string;
+    refreshToken: string;
+    user?: {
+      id: string;
+      email: string;
+      name?: string;
+      role?: string;
+    };
+    role?: string;
+  };
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -61,7 +78,7 @@ export default function LoginForm() {
           email: data.email,
           password: data.password,
         }),
-      });
+      }) as LoginResponse;
 
       if (res.success) {
         toast.success("Login successful", {
@@ -70,10 +87,18 @@ export default function LoginForm() {
           duration: 2500,
         });
 
+        // Refresh auth state to get user data
         await refresh();
 
+        // Determine redirect based on user role
+        const userRole = res.data?.user?.role || res.data?.role;
+        
         setTimeout(() => {
-          router.push("/chat");
+          if (userRole === "admin" || userRole === "ADMIN") {
+            router.push("/admin");
+          } else {
+            router.push("/chat");
+          }
         }, 800);
       } else {
         // Show specific error message from backend
@@ -84,9 +109,10 @@ export default function LoginForm() {
           description: getErrorDescription(errorMessage),
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle network errors or unexpected errors
-      const errorMessage = error?.message || "Unable to connect to server";
+      const err = error as Error;
+      const errorMessage = err?.message || "Unable to connect to server";
       
       toast.error("Couldn't login", {
         id: toastId,
