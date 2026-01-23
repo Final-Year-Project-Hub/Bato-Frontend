@@ -26,39 +26,22 @@ export const useRoadmaps = () => {
         {
           method: "GET",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
 
       const response = await res.json();
 
       if (!res.ok) {
-        setError(response.error || response.message || "Failed to fetch roadmaps");
+        setError(response?.message || "Failed to fetch roadmaps");
         return;
       }
 
-      //  FIX: Your backend returns array directly, NOT { data: [...] }
-      let roadmapsData: Roadmap[] = [];
-      
-      if (Array.isArray(response)) {
-        // Backend returns array directly
-        roadmapsData = response;
-      } else if (response.data && Array.isArray(response.data)) {
-        // Fallback: if it returns { data: [...] }
-        roadmapsData = response.data;
-      } else {
-        console.error("Unexpected response format:", response);
-        setError("Unexpected response format from server");
-        return;
-      }
-
-      setRoadmaps(roadmapsData);
+      // ✅ FIX: Extract data array from response
+      setRoadmaps(response.data || []);
     } catch (err: unknown) {
       console.error("Error fetching roadmaps:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch roadmaps";
-      setError(errorMessage);
+      setError("Failed to fetch roadmaps");
     } finally {
       setLoading(false);
     }
