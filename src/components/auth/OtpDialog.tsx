@@ -79,7 +79,7 @@ export function OtpDialog({
           sm:max-w-105
           rounded-2xl
           border border-white/10
-          bg-[#233845]/80
+          bg-background/50
           backdrop-blur-lg
         "
       >

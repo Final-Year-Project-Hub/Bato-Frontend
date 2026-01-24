@@ -39,7 +39,7 @@ export default function ForgetPassword() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#1e465e] flex items-center justify-center px-4">
+    <div className="relative min-h-screen bg-background flex items-center justify-center px-4">
       {/* LOGO */}
       <div className="absolute top-6 right-6 z-50">
         <Logo />
@@ -48,13 +48,9 @@ export default function ForgetPassword() {
       {/* CARD */}
       <Card
         className="w-full max-w-md px-8 py-8 rounded-2xl text-white border border-white/10"
-        style={{
-          background: "rgba(35, 56, 69, 0.85)",
-          backdropFilter: "blur(14px)",
-          boxShadow: "0 25px 70px rgba(0,0,0,0.65)",
-        }}
+       
       >
-        <div className="text-center ">
+        <div className="text-center  bg-background/10 ">
           <h2 className="text-2xl font-semibold text-[#EC5D44]">
             Find your account
           </h2>
@@ -103,7 +99,7 @@ export default function ForgetPassword() {
           console.log("OTP Verified:", otp);
           setOpenOtp(false);
 
-          // 👉 next step
+          //  next step
           // router.push("/reset-password");
         }}
         onResend={() => {
