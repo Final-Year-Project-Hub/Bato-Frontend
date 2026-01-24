@@ -18,7 +18,20 @@ import {
 } from "@/components/ui/form";
 
 import { Trash2 } from "lucide-react";
-import DeleteModal from "./DeleteModal"; // ✅ adjust path if needed
+import DeleteModal from "./DeleteModal";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+/* ---------------- Types ---------------- */
+interface UpdatePasswordResponse {
+  success: boolean;
+  message?: string;
+}
+
+interface DeleteAccountResponse {
+  success: boolean;
+  message?: string;
+}
 
 /* ---------------- Schema ---------------- */
 const securitySchema = z
@@ -36,6 +49,9 @@ type SecurityFormValues = z.infer<typeof securitySchema>;
 
 export default function SecuritySettings() {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<SecurityFormValues>({
     resolver: zodResolver(securitySchema),
@@ -46,14 +62,89 @@ export default function SecuritySettings() {
     },
   });
 
-  function onSubmit(values: SecurityFormValues) {
-    console.log("Security Data:", values);
+  async function onSubmit(values: SecurityFormValues) {
+    setIsSubmitting(true);
+    const toastId = toast.loading("Updating password...");
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/editUser`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: values.newPassword,
+        }),
+      });
+
+      const data: UpdatePasswordResponse = await res.json();
+
+      if (data.success) {
+        toast.success("Password updated successfully", {
+          id: toastId,
+          description: "Your password has been changed",
+        });
+
+        // Reset form
+        form.reset();
+      } else {
+        toast.error(data.message || "Failed to update password", {
+          id: toastId,
+        });
+      }
+    } catch (error) {
+      console.error("Password update error:", error);
+      toast.error("Failed to update password", {
+        id: toastId,
+        description: "Please try again later",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleDeleteAccount() {
-    console.log("Account deleted");
-    setOpenDeleteModal(false);
-    // 🔥 call delete account API here
+  async function handleDeleteAccount() {
+    setIsDeleting(true);
+    const toastId = toast.loading("Deleting account...");
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/deleteUser`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data: DeleteAccountResponse = await res.json();
+
+      if (data.success) {
+        toast.success("Account deleted", {
+          id: toastId,
+          description: "Your account has been permanently deleted",
+        });
+
+        setOpenDeleteModal(false);
+
+        // Redirect to home or login after 1 second
+        setTimeout(() => {
+          router.push("/");
+        }, 1000);
+      } else {
+        toast.error(data.message || "Failed to delete account", {
+          id: toastId,
+        });
+      }
+    } catch (error) {
+      console.error("Account deletion error:", error);
+      toast.error("Failed to delete account", {
+        id: toastId,
+        description: "Please try again later",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -63,9 +154,7 @@ export default function SecuritySettings() {
         <div className="max-w-3xl">
           <Card>
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold mb-6">
-                Change Password
-              </h2>
+              <h2 className="text-lg font-semibold mb-6">Change Password</h2>
 
               <Form {...form}>
                 <form
@@ -92,8 +181,8 @@ export default function SecuritySettings() {
                   />
 
                   <div className="md:col-span-2 flex justify-end">
-                    <Button type="submit">
-                      Update Password
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "Updating..." : "Update Password"}
                     </Button>
                   </div>
                 </form>
@@ -121,8 +210,9 @@ export default function SecuritySettings() {
             <Button
               variant="destructive"
               onClick={() => setOpenDeleteModal(true)}
+              disabled={isDeleting}
             >
-              Delete Account
+              {isDeleting ? "Deleting..." : "Delete Account"}
             </Button>
           </CardContent>
         </Card>
