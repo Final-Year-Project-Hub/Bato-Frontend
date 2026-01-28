@@ -22,14 +22,57 @@ export type ApiRoutes = {
     };
   };
 
-  "/auth/verifyOtp": {
+  "/auth/forgotPassword": {
     success: boolean;
     message: string;
+    data?: {
+      otpSent?: boolean;
+    };
   };
+
+  "/auth/verifyOtp": {
+  success: boolean;
+  message: string;
+  data: {
+    update: {  // ← Changed from "updatedUser" to "update"
+      id: string;
+      email: string;
+      emailVerified: boolean;
+      image: string | null;
+      password: string;
+      name: string;
+      role: string;
+      isActive: boolean;
+      createdAt: string;
+      updatedAt: string;
+      refreshToken: string;
+    };
+    emailVerified: boolean;
+    resetToken: string;  // ← This is the JWT token to use!
+  };
+};
 
   "/auth/resendOtp": {
     success: boolean;
     message: string;
+  };
+
+  "/auth/resetPassword": {
+    success: boolean;
+    message: string;
+    data: {
+      id: string;
+      name: string;
+      email: string;
+      emailVerified: boolean;
+      image: string | null;
+      password: string;
+      role: string;
+      isActive: boolean;
+      createdAt: string;
+      updatedAt: string;
+      refreshToken: string | null;
+    };
   };
 
   "/auth/logout": {
@@ -50,6 +93,7 @@ export type ApiRoutes = {
       isSelected: boolean;
     }[];
   };
+
   "/api/roadmap/:id": {
     success: boolean;
     message: string;

@@ -227,8 +227,7 @@ export default function ProfileSettings() {
       return;
     }
 
-    setAvatarPreview(URL.createObjectURL(file));
-    toast.success("Image changed successfully");
+    
   }
 
   const getInitials = () => {
@@ -241,7 +240,6 @@ export default function ProfileSettings() {
       .toUpperCase();
   };
 
-  /* ================= JSX ================= */
   return (
     <>
       <div className="space-y-6">
