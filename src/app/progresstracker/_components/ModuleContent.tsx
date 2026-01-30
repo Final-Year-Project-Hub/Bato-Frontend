@@ -50,8 +50,7 @@ export default function ModuleContent({
           Module {moduleIndex + 1}: {module.title}
         </h2>
       </div>
-
-      <div className="space-y-3">
+        <div className="space-y-3">
         {module.lessons.map((lesson, index) => {
           const isSelected = selectedLessonId === lesson.id;
 
