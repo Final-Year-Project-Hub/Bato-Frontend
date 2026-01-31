@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -45,6 +44,24 @@ interface UpdateProfileResponse {
   };
 }
 
+interface UpdateProfileImageResponse {
+  updatedUser: {
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    image: string;
+    password: string;
+    role: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    refreshToken: string;
+  };
+  message: string;
+  image: string;
+}
+
 interface VerifyOtpResponse {
   success: boolean;
   message?: string;
@@ -67,6 +84,7 @@ export default function ProfileSettings() {
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // OTP state
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -84,14 +102,19 @@ export default function ProfileSettings() {
   useEffect(() => {
     if (!user) return;
 
+    console.log("👤 Loading user data:", user);
+
     form.reset({
       name: user.name || "",
       email: user.email || "",
     });
 
-    const userWithImage = user as typeof user & { image?: string | null };
-    if (userWithImage.image) {
-      setAvatarPreview(userWithImage.image);
+    // Set avatar preview from user data
+    if (user.image) {
+      console.log("🖼️ Setting avatar from user.image:", user.image);
+      setAvatarPreview(user.image);
+    } else {
+      console.log("⚠️ No image found in user data");
     }
   }, [user, form]);
 
@@ -171,21 +194,20 @@ export default function ProfileSettings() {
         return;
       }
 
-   toast.success("Email verified successfully", {
-  id: toastId,
-  description: (
-    <span className="flex gap-2">
-      You can now login.
-      <button
-        onClick={() => router.push("/login")}
-        className="text-primary font-medium hover:underline"
-      >
-        Go to Login
-      </button>
-    </span>
-  ),
-});
-
+      toast.success("Email verified successfully", {
+        id: toastId,
+        description: (
+          <span className="flex gap-2">
+            You can now login.
+            <button
+              onClick={() => router.push("/login")}
+              className="text-primary font-medium hover:underline"
+            >
+              Go to Login
+            </button>
+          </span>
+        ),
+      });
 
       setShowOtpModal(false);
       await refresh();
@@ -198,18 +220,15 @@ export default function ProfileSettings() {
   /* ================= Resend OTP ================= */
   async function handleResendOtp() {
     try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/resendOtp`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: newEmail,
-            purpose: "EMAIL_VERIFICATION",
-          }),
-        }
-      );
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/resendOtp`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: newEmail,
+          purpose: "EMAIL_VERIFICATION",
+        }),
+      });
 
       toast.success("OTP resent successfully");
     } catch {
@@ -217,17 +236,95 @@ export default function ProfileSettings() {
     }
   }
 
-  /* ================= Avatar ================= */
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  /* ================= Avatar Upload ================= */
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log("📁 File selected:", file.name, file.type, file.size);
+
+    // Validate file size (2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error("Image must be under 2MB");
       return;
     }
 
-    
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const toastId = toast.loading("Uploading profile picture...");
+
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const uploadUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/userProfileImage`;
+      console.log("📤 Uploading to:", uploadUrl);
+
+      // Upload to backend
+      const res = await fetch(uploadUrl, {
+        method: "PUT",
+        credentials: "include",
+        body: formData,
+      });
+
+      console.log("📥 Response status:", res.status);
+
+      if (!res.ok) {
+        let errorMessage;
+        try {
+          const errorData = await res.json();
+          console.error("❌ Error response:", errorData);
+          errorMessage = errorData.message || errorData.error || `Upload failed: ${res.status}`;
+        } catch {
+          const errorText = await res.text();
+          console.error("❌ Error response (text):", errorText);
+          errorMessage = `Upload failed: ${res.status}`;
+        }
+        toast.error(errorMessage, { id: toastId });
+        return;
+      }
+
+      const data: UpdateProfileImageResponse = await res.json();
+      console.log("✅ Upload successful!");
+      console.log("📦 Response data:", data);
+
+      // Extract image URL
+      const imageUrl = data.updatedUser?.image || data.image;
+      
+      if (!imageUrl) {
+        console.error("❌ No image URL in response");
+        toast.error("Upload failed: No image URL returned", { id: toastId });
+        return;
+      }
+
+      console.log("🖼️ New image URL:", imageUrl);
+
+      // Update local preview immediately
+      setAvatarPreview(imageUrl);
+
+      toast.success("Profile picture updated successfully", { id: toastId });
+
+      // Refresh user data from backend to sync everything
+      console.log("🔄 Refreshing user data...");
+      await refresh();
+      console.log("✅ User data refreshed");
+    } catch (err) {
+      console.error("❌ Upload error:", err);
+      
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        toast.error("Network error: Cannot reach server", { id: toastId });
+      } else {
+        toast.error("Failed to upload image", { id: toastId });
+      }
+    } finally {
+      setIsUploadingImage(false);
+    }
   }
 
   const getInitials = () => {
@@ -256,10 +353,12 @@ export default function ProfileSettings() {
 
               <label
                 htmlFor="avatar"
-                className="cursor-pointer text-sm text-primary hover:underline flex items-center gap-2"
+                className={`cursor-pointer text-sm text-primary hover:underline flex items-center gap-2 ${
+                  isUploadingImage ? "opacity-50 pointer-events-none" : ""
+                }`}
               >
                 <Camera size={16} />
-                Upload New Picture
+                {isUploadingImage ? "Uploading..." : "Upload New Picture"}
               </label>
 
               <input
@@ -268,8 +367,12 @@ export default function ProfileSettings() {
                 accept="image/*"
                 hidden
                 onChange={handleAvatarChange}
+                disabled={isUploadingImage}
               />
             </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Maximum file size: 2MB. Supported formats: JPG, PNG, GIF
+            </p>
           </CardContent>
         </Card>
 
@@ -309,7 +412,7 @@ export default function ProfileSettings() {
                       <FormMessage />
                       {user?.email !== field.value && (
                         <p className="text-xs text-amber-500">
-                           Changing email requires OTP verification
+                          Changing email requires OTP verification
                         </p>
                       )}
                     </FormItem>

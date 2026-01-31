@@ -7,7 +7,7 @@ import {
   Waypoints,
   Settings,
   MessageCircle,
-  Plus,
+  
   LogOut,
 } from "lucide-react";
 import clsx from "clsx";
@@ -17,6 +17,7 @@ import { useState } from "react";
 import LogoutModal from "@/app/chat/components/LogoutModal";
 import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type ViewType = "dashboard" | "settings" | "roadmaps" | "chat";
 
@@ -46,6 +47,7 @@ export default function SideBar({
   const email = auth.user?.email || "";
   const displayName = auth.user?.name || auth.user?.email || "User";
   const initial = (displayName?.trim()?.[0] || "U").toUpperCase();
+  const userImage = auth.user?.image; // Get user image from auth
 
   const handleLogout = async () => {
     try {
@@ -125,29 +127,37 @@ export default function SideBar({
         <div className="flex items-center justify-between gap-3">
           {/* Left: avatar + info */}
           <div className="flex items-center gap-3 min-w-0">
-            {/* Initial circle */}
-            <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
-              {initial}
-            </div>
+            {/* Avatar with image or initial */}
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={userImage || ""} alt={displayName} />
+              <AvatarFallback className="bg-primary/15 text-primary font-semibold">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
 
             {/* Name + email */}
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {auth.user?.name ?? "User"}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">{email}</p>
-            </div>
+            {!collapsed && (
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {auth.user?.name ?? "User"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{email}</p>
+              </div>
+            )}
           </div>
 
           {/* Right: logout */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowLogout(true)}
-            className="text-white hover:text-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
+          {!collapsed && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowLogout(true)}
+              className="text-white hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          )}
+          
           <LogoutModal
             open={showLogout}
             onClose={() => setShowLogout(false)}
