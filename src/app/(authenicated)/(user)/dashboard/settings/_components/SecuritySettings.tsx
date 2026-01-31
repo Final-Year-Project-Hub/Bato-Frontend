@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { Trash2 } from "lucide-react";
+import { Trash2, Eye, EyeOff } from "lucide-react";
 import DeleteModal from "./DeleteModal";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -67,16 +67,19 @@ export default function SecuritySettings() {
     const toastId = toast.loading("Updating password...");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/editUser`, {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          password: values.newPassword,
-        }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/editUser`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            password: values.newPassword,
+          }),
+        }
+      );
 
       const data: UpdatePasswordResponse = await res.json();
 
@@ -85,13 +88,9 @@ export default function SecuritySettings() {
           id: toastId,
           description: "Your password has been changed",
         });
-
-        // Reset form
         form.reset();
       } else {
-        toast.error(data.message || "Failed to update password", {
-          id: toastId,
-        });
+        toast.error(data.message || "Failed to update password", { id: toastId });
       }
     } catch (error) {
       console.error("Password update error:", error);
@@ -109,13 +108,16 @@ export default function SecuritySettings() {
     const toastId = toast.loading("Deleting account...");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/deleteUser`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/deleteUser`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const data: DeleteAccountResponse = await res.json();
 
@@ -127,14 +129,11 @@ export default function SecuritySettings() {
 
         setOpenDeleteModal(false);
 
-        // Redirect to home or login after 1 second
         setTimeout(() => {
           router.push("/");
         }, 1000);
       } else {
-        toast.error(data.message || "Failed to delete account", {
-          id: toastId,
-        });
+        toast.error(data.message || "Failed to delete account", { id: toastId });
       }
     } catch (error) {
       console.error("Account deletion error:", error);
@@ -218,7 +217,7 @@ export default function SecuritySettings() {
         </Card>
       </div>
 
-      {/* ✅ Modal Integration */}
+      {/*  Modal Integration */}
       <DeleteModal
         open={openDeleteModal}
         onClose={() => setOpenDeleteModal(false)}
@@ -241,6 +240,8 @@ function PasswordField({
   control: Control<SecurityFormValues>;
   colSpan?: boolean;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <FormField
       control={control}
@@ -249,7 +250,20 @@ function PasswordField({
         <FormItem className={colSpan ? "md:col-span-2" : ""}>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input type="password" {...field} />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                {...field}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-2 flex items-center px-2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+              </button>
+            </div>
           </FormControl>
           <FormMessage />
         </FormItem>
