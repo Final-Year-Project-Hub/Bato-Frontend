@@ -3,7 +3,6 @@
 import { CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { RoadmapPhase } from "../types";
-import { Separator } from "@/components/ui/separator";
 
 interface ProgressSidebarProps {
   modules: RoadmapPhase[];
@@ -87,10 +86,10 @@ export default function ProgressSidebar({
             );
 
             return (
-              <div key={module.id}>
+              <div key={module.phase_number}>
                 {/* Module Header */}
                 <button
-                  onClick={() => toggleModule(module.id)}
+                  onClick={() => toggleModule(module.title)}
                   className={`w-full text-left p-3 rounded-lg transition-all ${
                     isModuleSelected && !hasSelectedLesson
                       ? "bg-primary/20 border border-primary/50"
@@ -165,8 +164,8 @@ export default function ProgressSidebar({
 
                       return (
                         <button
-                          key={lesson.id}
-                          onClick={() => handleLessonClick(lesson.id, module.id)}
+                          key={lesson.title}
+                          onClick={() => handleLessonClick(lesson.title, module.title)}
                           className={`w-full text-left p-2.5 rounded-md transition-all ${
                             isLessonSelected
                               ? "bg-primary/15 border border-primary/40"
