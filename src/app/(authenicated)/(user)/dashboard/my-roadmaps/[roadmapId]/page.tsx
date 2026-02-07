@@ -1,3 +1,4 @@
+import Link from "next/link";
 import RoadmapDetailClient from "../../_components/RoadmapDetailClient";
 
 export default async function RoadmapPage({
@@ -9,6 +10,7 @@ export default async function RoadmapPage({
   return (
     <main className="min-h-screen bg-grey p-4 sm:p-8">
       <div className="max-w-5xl mx-auto">
+        <Link href={`/progresstracker/${roadmapId}`}>Track </Link>
         <RoadmapDetailClient roadmapId={roadmapId} />
       </div>
     </main>

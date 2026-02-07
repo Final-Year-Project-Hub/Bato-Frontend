@@ -25,3 +25,30 @@ export interface RoadmapProgress {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface RoadmapTopic {
+  title: string;
+  doc_link: string;
+  description: string;
+  estimated_hours: number;
+}
+
+export interface RoadmapPhase {
+  phase_number: number;
+  title: string;
+  description: string;
+  estimated_hours: number;
+  topics: RoadmapTopic[];
+}
+
+
+export interface RoadmapResponse {
+  goal: string;
+  intent: string;
+  key_technologies: string[];
+  next_steps: string[];
+  prerequisites: string[];
+  proficiency: "beginner" | "intermediate" | "advanced";
+  total_estimated_hours: number;
+  phases: RoadmapPhase[];
+}

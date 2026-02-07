@@ -7,7 +7,7 @@ interface ProgressHeaderProps {
   title: string;
   totalModules: number;
   totalLessons: number;
-  completionPercentage: number;
+  completionPercentage?: number;
 }
 
 export default function ProgressHeader({
