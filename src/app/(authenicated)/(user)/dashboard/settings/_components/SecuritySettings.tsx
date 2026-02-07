@@ -116,8 +116,9 @@ export default function SecuritySettings() {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+     },
       );
+      await fetch("/api/session/clear", { method: "POST" });
 
       const data: DeleteAccountResponse = await res.json();
 

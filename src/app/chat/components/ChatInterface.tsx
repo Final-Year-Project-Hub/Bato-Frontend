@@ -23,6 +23,7 @@ type ChatMsg = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  rawContent?: string;
   createdAt?: number;
   roadmapId?: string;
 };
@@ -155,6 +156,50 @@ export default function ChatInterface({
     }
   }, [messages, loading, isStreaming]);
 
+  const toHumanRoadmapLive = (raw: string) => {
+    const cleaned = (raw || "").replace(/```json|```/g, "");
+
+    const pick = (re: RegExp) => cleaned.match(re)?.[1];
+
+    const goal = pick(/"goal"\s*:\s*"([^"]*)"/);
+    const prof = pick(/"proficiency"\s*:\s*"([^"]*)"/);
+    const intent = pick(/"intent"\s*:\s*"([^"]*)"/);
+
+    const lines: string[] = [];
+
+    if (goal) lines.push(`Roadmap: ${goal}`);
+    if (intent || prof)
+      lines.push([intent, prof].filter(Boolean).join("  |  "));
+    if (lines.length) lines.push("");
+
+    // ✅ streaming-friendly: list phases detected so far
+    // we detect using phase_number (NOT title format)
+    const phaseRe =
+      /"phase_number"\s*:\s*(\d+)[\s\S]*?"title"\s*:\s*"([^"]+)"/g;
+
+    const phaseMatches = [...cleaned.matchAll(phaseRe)];
+
+    // Dedup by phase_number (because matches can repeat as stream grows)
+    const phaseMap = new Map<number, { num: number; title: string }>();
+    for (const m of phaseMatches) {
+      const num = Number(m[1]);
+      const title = m[2];
+      if (!Number.isNaN(num)) phaseMap.set(num, { num, title });
+    }
+
+    const phases = [...phaseMap.values()].sort((a, b) => a.num - b.num);
+
+    // Show each phase header (even if topics not complete yet)
+    for (const p of phases) {
+      lines.push(`## Phase ${p.num}: ${p.title}`);
+      lines.push(""); // spacing
+    }
+
+    // If nothing yet, show a friendly status
+    if (lines.length === 0) return "Generating roadmap...";
+    return lines.join("\n").trimEnd();
+  };
+
   const looksLikeRoadmapJson = useCallback((raw: string) => {
     const s = (raw || "").trim();
     if (!s) return false;
@@ -164,6 +209,73 @@ export default function ChatInterface({
 
     return false;
   }, []);
+
+  const extractCompletePhases = (raw: string) => {
+    const cleaned = (raw || "").replace(/```json|```/g, "");
+    const phases: any[] = [];
+
+    // find each `"phase_number":`
+    const re = /"phase_number"\s*:\s*(\d+)/g;
+    const hits = [...cleaned.matchAll(re)];
+
+    for (const hit of hits) {
+      const idx = hit.index ?? -1;
+      if (idx < 0) continue;
+
+      // walk backwards to find the '{' that starts this phase object
+      let start = idx;
+      while (start >= 0 && cleaned[start] !== "{") start--;
+      if (start < 0) continue;
+
+      // brace-balance forward to find the matching '}'
+      let depth = 0;
+      let inString = false;
+      let esc = false;
+      let end = -1;
+
+      for (let i = start; i < cleaned.length; i++) {
+        const ch = cleaned[i];
+
+        if (esc) {
+          esc = false;
+          continue;
+        }
+        if (ch === "\\") {
+          esc = true;
+          continue;
+        }
+        if (ch === '"') inString = !inString;
+
+        if (!inString) {
+          if (ch === "{") depth++;
+          if (ch === "}") {
+            depth--;
+            if (depth === 0) {
+              end = i;
+              break;
+            }
+          }
+        }
+      }
+
+      // not complete yet
+      if (end === -1) continue;
+
+      const phaseStr = cleaned.slice(start, end + 1);
+      try {
+        const phaseObj = JSON.parse(phaseStr);
+        if (phaseObj?.phase_number) phases.push(phaseObj);
+      } catch {
+        // ignore incomplete/invalid objects
+      }
+    }
+
+    // dedupe by phase_number
+    const map = new Map<number, any>();
+    for (const p of phases) map.set(p.phase_number, p);
+
+    return [...map.values()].sort((a, b) => a.phase_number - b.phase_number);
+  };
 
   const formatRoadmapTitles = useCallback((raw: string) => {
     const cleaned = (raw || "").replace(/```json|```/g, "");
@@ -177,95 +289,94 @@ export default function ChatInterface({
 
     const lines: string[] = [];
 
-    // Header (shows as soon as fields exist)
     if (goal) lines.push(`Roadmap: ${goal}`);
     if (intent || prof || total) {
       lines.push(
-        [
-          intent ? `${intent}` : null,
-          prof ? `${prof}` : null,
-          total ? `${total} hrs` : null,
-        ]
+        [intent, prof, total ? `${total} hrs` : null]
           .filter(Boolean)
           .join("  |  "),
       );
     }
     if (lines.length) lines.push("");
 
-    // --- PHASES ---
-    const phaseTitleRe = /"title"\s*:\s*"(Phase\s*\d+\s*:[^"]*)"/g;
+    // ✅ ONLY THIS BLOCK FOR PHASES
+    // --- PHASES (realtime) ---
+    try {
+      // full parse when complete
+      const jsonText = cleaned.trim().startsWith("{")
+        ? cleaned.trim()
+        : cleaned.slice(cleaned.indexOf("{"), cleaned.lastIndexOf("}") + 1);
 
-    const phaseStarts: Array<{ idx: number; title: string }> = [];
-    for (const m of cleaned.matchAll(phaseTitleRe)) {
-      if (typeof m.index === "number")
-        phaseStarts.push({ idx: m.index, title: m[1] });
+      const parsed = JSON.parse(jsonText);
+
+      if (Array.isArray(parsed?.phases)) {
+        // ✅ full render (final)
+        for (const phase of parsed.phases) {
+          lines.push(
+            `## Phase ${phase.phase_number}: ${phase.title}${phase.estimated_hours ? ` (${phase.estimated_hours} hrs)` : ""}`,
+          );
+          if (phase.description) lines.push(phase.description);
+          lines.push("");
+
+          for (const topic of phase.topics || []) {
+            lines.push(
+              `- **${topic.title}**${topic.estimated_hours ? ` (${topic.estimated_hours} hrs)` : ""}`,
+            );
+            if (topic.description) lines.push(`  ${topic.description}`);
+            if (topic.doc_link) lines.push(`  ${topic.doc_link}`);
+            lines.push("");
+          }
+        }
+        return lines.join("\n").trimEnd();
+      }
+    } catch {
+      // ignore -> fallback below
     }
 
-    if (phaseStarts.length === 0) {
-      if (!lines.length) return "Generating roadmap...";
-      return lines.join("\n").trimEnd();
+    // ✅ fallback: partial phases while streaming
+    const partialPhases = extractCompletePhases(raw);
+
+    if (partialPhases.length === 0) {
+      return lines.length
+        ? lines.join("\n").trimEnd()
+        : "Generating roadmap...";
     }
 
-    const getSlice = (start: number, end?: number) =>
-      cleaned.slice(start, end ?? cleaned.length);
-
-    for (let i = 0; i < phaseStarts.length; i++) {
-      const start = phaseStarts[i].idx;
-      const end = phaseStarts[i + 1]?.idx; // until next phase begins
-      const block = getSlice(start, end);
-
-      const title = phaseStarts[i].title;
-
-      const pDesc = block.match(/"description"\s*:\s*"([^"]*)"/)?.[1];
-      const pHrs = block.match(/"estimated_hours"\s*:\s*([0-9.]+)/)?.[1];
-
-      lines.push(`## ${title}${pHrs ? ` (${pHrs} hrs)` : ""}`);
-      if (pDesc) lines.push(pDesc);
+    for (const phase of partialPhases) {
+      lines.push(
+        `## Phase ${phase.phase_number}: ${phase.title}${phase.estimated_hours ? ` (${phase.estimated_hours} hrs)` : ""}`,
+      );
+      if (phase.description) lines.push(phase.description);
       lines.push("");
 
-      // --- TOPICS inside this phase ---
-      const topicRe =
-        /"topics"\s*:\s*\[[\s\S]*?\{\s*"title"\s*:\s*"([^"]+)"[\s\S]*?"description"\s*:\s*"([^"]*)"(?:[\s\S]*?"estimated_hours"\s*:\s*([0-9.]+))?(?:[\s\S]*?"doc_link"\s*:\s*"([^"]*)")?/g;
-
-      const topicMatches = [...block.matchAll(topicRe)];
-
-      for (const tm of topicMatches) {
-        const tTitle = tm[1];
-        const tDesc = tm[2];
-        const tHrs = tm[3];
-        const tLink = tm[4];
-
-        // skip if this is actually another phase title accidentally
-        if (/^Phase\s*\d+\s*:/i.test(tTitle)) continue;
-
-        lines.push(`- **${tTitle}**${tHrs ? ` (${tHrs} hrs)` : ""}`);
-        if (tDesc) lines.push(`  ${tDesc}`);
-        if (tLink) lines.push(`  ${tLink}`);
-
-        // --- SUBTOPICS inside this topic ---
-        const afterTitleIdx = block.indexOf(`"title": "${tTitle}"`);
-        const topicWindow =
-          afterTitleIdx >= 0
-            ? block.slice(afterTitleIdx, afterTitleIdx + 2000)
-            : "";
-
-        const subRe =
-          /"subtopics"\s*:\s*\[[\s\S]*?\{\s*"title"\s*:\s*"([^"]+)"[\s\S]*?"description"\s*:\s*"([^"]*)"(?:[\s\S]*?"estimated_hours"\s*:\s*([0-9.]+))?(?:[\s\S]*?"doc_link"\s*:\s*"([^"]*)")?/g;
-
-        const subMatches = [...topicWindow.matchAll(subRe)];
-        for (const sm of subMatches) {
-          const sTitle = sm[1];
-          const sDesc = sm[2];
-          const sHrs = sm[3];
-          const sLink = sm[4];
-
-          lines.push(`  - ${sTitle}${sHrs ? ` (${sHrs} hrs)` : ""}`);
-          if (sDesc) lines.push(`    ${sDesc}`);
-          if (sLink) lines.push(`    ${sLink}`);
-        }
-
+      for (const topic of phase.topics || []) {
+        lines.push(
+          `- **${topic.title}**${topic.estimated_hours ? ` (${topic.estimated_hours} hrs)` : ""}`,
+        );
+        if (topic.description) lines.push(`  ${topic.description}`);
+        if (topic.doc_link) lines.push(`  ${topic.doc_link}`);
         lines.push("");
       }
+    }
+
+    // ✅ LIVE: show topics even before phase closes (feels GPT-like)
+    const topicTitleRe =
+      /"title"\s*:\s*"([^"]+)"\s*,\s*"description"\s*:\s*"([^"]*)"/g;
+
+    const topicMatches = [...cleaned.matchAll(topicTitleRe)].slice(0, 12);
+
+    if (topicMatches.length) {
+      lines.push("### Topics appearing…");
+      for (const tm of topicMatches) {
+        const tTitle = tm[1];
+
+        // skip headers / keys that are not real topics
+        if (/^Phase\s*\d+/i.test(tTitle)) continue;
+        if (tTitle === goal) continue;
+
+        lines.push(`- ${tTitle}`);
+      }
+      lines.push("");
     }
 
     return lines.join("\n").trimEnd();
@@ -424,6 +535,10 @@ export default function ChatInterface({
           );
         },
 
+        onRawChunk: (chunk) => {
+          console.log("[SSE raw chunk]", chunk);
+        },
+
         onStatus: (s) => {
           if (!hasAnyTokenRef.current) {
             setMessages((prev) =>
@@ -475,6 +590,8 @@ export default function ChatInterface({
           );
         },
       });
+
+      console.log(rawStreamText);
 
       const finalRaw = rawStreamText.trim();
       const toSave = finalRaw;
