@@ -27,6 +27,7 @@ export interface RoadmapProgress {
 }
 
 export interface RoadmapTopic {
+  id: string;
   title: string;
   doc_link: string;
   description: string;
@@ -34,6 +35,7 @@ export interface RoadmapTopic {
 }
 
 export interface RoadmapPhase {
+  id: string;
   phase_number: number;
   title: string;
   description: string;
