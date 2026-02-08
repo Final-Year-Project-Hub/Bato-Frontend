@@ -20,11 +20,13 @@ export function useDocumentUpload() {
     maxTokensPerChunk: number;
     file: File;
   }) => {
+    console.log("useDocumentUpload hook called");
     setUploading(true);
 
     try {
-      // Create FormData for file upload
       const data = new FormData();
+      
+      console.log("Creating FormData...");
       
       // Map your form fields to backend expected fields
       data.append("frameworkKey", formData.frameworkKey.toLowerCase());
@@ -46,15 +48,23 @@ export function useDocumentUpload() {
       data.append("maxTokens", String(formData.maxTokensPerChunk));
       data.append("file", formData.file);
 
-      // Optional: these might have defaults in backend
+      // Optional backend fields
       data.append("collectionName", formData.frameworkKey.toLowerCase());
       data.append("recreateCollection", "false");
+
+      console.log("Sending API request to /api/admin/documents/upload");
+      console.log("File details:", {
+        name: formData.file.name,
+        size: formData.file.size,
+        type: formData.file.type,
+      });
 
       const response = await apiFetch("/api/admin/documents/upload", {
         method: "POST",
         body: data,
-        // Don't set Content-Type header - browser will set it automatically with boundary
       });
+
+      console.log("API Response received:", response);
 
       if (response.success) {
         toast.success("Framework uploaded successfully!", {
