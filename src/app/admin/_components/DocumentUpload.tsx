@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, File, X} from "lucide-react";
+import { Upload, File, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,6 +18,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { toast } from "sonner";
+import { useDocumentUpload } from "@/lib/hooks/useDocumentUpload";
 
 /* ================= Schema ================= */
 const frameworkSchema = z.object({
@@ -46,8 +47,10 @@ type FrameworkFormValues = z.infer<typeof frameworkSchema>;
 
 export default function DocumentUpload() {
   const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Use the custom hook
+  const { uploadDocument, uploading } = useDocumentUpload();
 
   const form = useForm<FrameworkFormValues>({
     resolver: zodResolver(frameworkSchema),
@@ -109,6 +112,10 @@ export default function DocumentUpload() {
   };
 
   const onSubmit = async (data: FrameworkFormValues) => {
+    console.log("Form submitted!");
+    console.log("Form data:", data);
+    console.log("Files:", files);
+
     // Check if file is uploaded
     if (files.length === 0) {
       toast.error("No file uploaded", {
@@ -117,26 +124,22 @@ export default function DocumentUpload() {
       return;
     }
 
-    setUploading(true);
+    console.log("Starting upload...");
 
-    // Transform frameworkKey to lowercase before submission
-    const formData = {
+    // Call the hook's upload function
+    const result = await uploadDocument({
       ...data,
-      frameworkKey: data.frameworkKey.toLowerCase(),
-      file: files[0], // Include the uploaded file
-    };
+      file: files[0],
+    });
 
-    // Simulate upload
-    await new Promise((r) => setTimeout(r, 2000));
+    console.log("Upload result:", result);
 
-    console.log("Form data:", formData);
-    toast.success("Framework uploaded successfully!");
-
-    // Reset form and files
-    form.reset();
-    setFiles([]);
-    setUploading(false);
-    setShowAdvanced(false);
+    // Reset form and files on success
+    if (result.success) {
+      form.reset();
+      setFiles([]);
+      setShowAdvanced(false);
+    }
   };
 
   return (
@@ -369,6 +372,7 @@ export default function DocumentUpload() {
                               type="number"
                               placeholder="800"
                               className="bg-grey border-border"
+                              onChange={(e) => field.onChange(Number(e.target.value))}
                             />
                           </FormControl>
                           <FormMessage />
@@ -388,6 +392,7 @@ export default function DocumentUpload() {
                               type="number"
                               placeholder="4000"
                               className="bg-grey border-border"
+                              onChange={(e) => field.onChange(Number(e.target.value))}
                             />
                           </FormControl>
                           <FormMessage />
