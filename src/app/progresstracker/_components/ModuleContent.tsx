@@ -51,7 +51,7 @@ export default function ModuleContent({
         {/* )} */}
         <h2 className="text-2xl font-semibold text-white">{module.title}</h2>
       </div>
-      <div className="space-y-3">
+        <div className="space-y-3">
         {module.topics.map((lesson, index) => {
           const isSelected = selectedLessonId === lesson.id;
 
@@ -60,8 +60,8 @@ export default function ModuleContent({
               key={lesson.id}
               className={`p-4 transition-all group ${
                 isSelected
-                  ? "bg-[#2A2A2A] border-[#EC5D44]/50 shadow-lg shadow-[#EC5D44]/10"
-                  : "bg-[#2A2A2A] border-white/10 hover:border-[#EC5D44]/30"
+                  ? "bg-card border-primary/50 shadow-lg shadow-primary/10"
+                  : "bg-card border-border hover:border-primary/30"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -71,10 +71,15 @@ export default function ModuleContent({
                       lesson.completed
                         ? "bg-green-500/20"
                         : isSelected
-                        ? "bg-[#EC5D44]/20"
-                        : "bg-white/5"
+                        ? "bg-primary/20"
+                        : "bg-muted"
                     }`}
                   > */}
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                      isSelected ? "bg-[#EC5D44]/20" : "bg-white/5"
+                    }`}
+                  > 
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                       isSelected ? "bg-[#EC5D44]/20" : "bg-white/5"
@@ -85,7 +90,7 @@ export default function ModuleContent({
                     ) : ( */}
                     <span
                       className={`text-sm font-semibold ${
-                        isSelected ? "text-[#EC5D44]" : "text-white/60"
+                        isSelected ? "text-primary" : "text-muted-foreground"
                       }`}
                     >
                       {toRoman(index + 1)}
@@ -96,8 +101,8 @@ export default function ModuleContent({
                     <h3
                       className={`text-base font-medium transition-colors ${
                         isSelected
-                          ? "text-white"
-                          : "text-white/90 group-hover:text-[#EC5D44]"
+                          ? "text-foreground"
+                          : "text-foreground/90 group-hover:text-primary"
                       }`}
                     >
                       {lesson.title}
@@ -110,14 +115,15 @@ export default function ModuleContent({
                   size="sm"
                   className={`${
                     isSelected
-                      ? "text-[#EC5D44] bg-[#EC5D44]/10"
-                      : "text-[#EC5D44] hover:bg-[#EC5D44]/10"
-                  } hover:text-[#EC5D44]`}
+                      ? "text-primary bg-primary/10"
+                      : "text-primary hover:bg-primary/10"
+                  } hover:text-primary`}
                 >
                   View →
                 </Button>
               </div>
             </Card>
+        
           );
         })}
       </div>
