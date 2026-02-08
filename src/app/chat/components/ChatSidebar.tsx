@@ -228,38 +228,51 @@ export default function ChatSidebar() {
         </div>
 
         {/* User Profile Section */}
+        {/* User Profile Section */}
         <div className="w-full border-t border-sidebar-border px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            {/* Left: avatar + info */}
-            <div className="flex items-center gap-3 min-w-0">
+            {/* Left: avatar + info - clickable to go to settings */}
+            <button
+              onClick={() => router.push("/dashboard/settings")}
+              className="flex items-center gap-3 min-w-0 hover:bg-sidebar-accent/50 rounded-md px-2 py-1.5 transition-colors flex-1"
+            >
               {/* Avatar with image or initial */}
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={userImage || ""} alt={displayName} className="object-cover" />
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage
+                  src={userImage || ""}
+                  alt={displayName}
+                  className="object-cover"
+                />
                 <AvatarFallback className="bg-primary/15 text-primary font-semibold">
                   {initial}
                 </AvatarFallback>
               </Avatar>
 
               {/* Name + email */}
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  {auth.user?.name ?? "User"}
-                </p>
-                <p className="text-xs text-sidebar-foreground/60 truncate">
-                  {email}
-                </p>
-              </div>
-            </div>
+              {!collapsed && (
+                <div className="min-w-0 text-left flex-1">
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">
+                    {auth.user?.name ?? "User"}
+                  </p>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">
+                    {email}
+                  </p>
+                </div>
+              )}
+            </button>
 
             {/* Right: logout */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowLogout(true)}
-              className="text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-            </Button>
+            {!collapsed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowLogout(true)}
+                className="text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent shrink-0"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            )}
+
             <LogoutModal
               open={showLogout}
               onClose={() => setShowLogout(false)}
@@ -304,8 +317,8 @@ function SidebarLinkItem({
           "flex items-center w-full rounded-md transition-colors",
           "text-sidebar-foreground text-[14px]",
           "gap-3 px-3 py-2 justify-start",
-          isActive 
-            ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+          isActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
             : "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
         )}
       >
