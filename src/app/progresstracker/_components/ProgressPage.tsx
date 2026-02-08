@@ -117,7 +117,7 @@ export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
               </h2> */}
               {roadmapData.phases.map((module, index) => (
                 <ModuleContent
-                  key={module.id}
+                  key={module.phase_number}
                   module={module}
                   moduleIndex={index}
                   selectedLessonId={selectedLesson}
@@ -138,7 +138,7 @@ export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
                   );
                   return (
                     <ModuleContent
-                      key={module.id}
+                      key={module.title}
                       module={module}
                       moduleIndex={actualIndex}
                       selectedLessonId={selectedLesson}

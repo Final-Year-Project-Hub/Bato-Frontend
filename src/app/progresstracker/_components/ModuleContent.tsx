@@ -57,7 +57,7 @@ export default function ModuleContent({
 
           return (
             <Card
-              key={lesson.id}
+              key={lesson.title}
               className={`p-4 transition-all group ${
                 isSelected
                   ? "bg-card border-primary/50 shadow-lg shadow-primary/10"
@@ -71,15 +71,10 @@ export default function ModuleContent({
                       lesson.completed
                         ? "bg-green-500/20"
                         : isSelected
-                        ? "bg-primary/20"
-                        : "bg-muted"
+                        ? "bg-[#EC5D44]/20"
+                        : "bg-white/5"
                     }`}
                   > */}
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                      isSelected ? "bg-[#EC5D44]/20" : "bg-white/5"
-                    }`}
-                  > 
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                       isSelected ? "bg-[#EC5D44]/20" : "bg-white/5"
@@ -110,7 +105,7 @@ export default function ModuleContent({
                   </div>
                 </div>
                 <Button
-                  onClick={() => onViewLesson(lesson.id)}
+                  onClick={() => onViewLesson(lesson.title)}
                   variant="ghost"
                   size="sm"
                   className={`${
