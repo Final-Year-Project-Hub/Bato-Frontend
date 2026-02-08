@@ -1,6 +1,5 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Module, RoadmapPhase } from "../types";
@@ -54,11 +53,11 @@ export default function ModuleContent({
       </div>
       <div className="space-y-3">
         {module.topics.map((lesson, index) => {
-          const isSelected = selectedLessonId === lesson.title;
+          const isSelected = selectedLessonId === lesson.id;
 
           return (
             <Card
-              key={lesson.title}
+              key={lesson.id}
               className={`p-4 transition-all group ${
                 isSelected
                   ? "bg-[#2A2A2A] border-[#EC5D44]/50 shadow-lg shadow-[#EC5D44]/10"
@@ -106,7 +105,7 @@ export default function ModuleContent({
                   </div>
                 </div>
                 <Button
-                  onClick={() => onViewLesson(lesson.title)}
+                  onClick={() => onViewLesson(lesson.id)}
                   variant="ghost"
                   size="sm"
                   className={`${

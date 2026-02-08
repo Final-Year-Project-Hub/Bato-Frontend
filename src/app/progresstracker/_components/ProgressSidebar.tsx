@@ -3,6 +3,7 @@
 import { CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { RoadmapPhase } from "../types";
+import { Separator } from "@/components/ui/separator";
 
 interface ProgressSidebarProps {
   modules: RoadmapPhase[];
@@ -79,17 +80,17 @@ export default function ProgressSidebar({
       <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-1">
           {modules.map((module, moduleIndex) => {
-            const isExpanded = expandedModules.has(module.title);
-            const isModuleSelected = selectedModule === module.title;
+            const isExpanded = expandedModules.has(module.id);
+            const isModuleSelected = selectedModule === module.id;
             const hasSelectedLesson = module.topics.some(
-              (lesson) => lesson.title === selectedLesson
+              (lesson) => lesson.id === selectedLesson
             );
 
             return (
-              <div key={module.phase_number}>
+              <div key={module.id}>
                 {/* Module Header */}
                 <button
-                  onClick={() => toggleModule(module.title)}
+                  onClick={() => toggleModule(module.id)}
                   className={`w-full text-left p-3 rounded-lg transition-all ${
                     isModuleSelected && !hasSelectedLesson
                       ? "bg-[#EC5D44]/20 border border-[#EC5D44]/50"
@@ -160,12 +161,12 @@ export default function ProgressSidebar({
                 {isExpanded && (
                   <div className="ml-10 mt-1 space-y-1">
                     {module.topics.map((lesson, lessonIndex) => {
-                      const isLessonSelected = selectedLesson === lesson.title;
+                      const isLessonSelected = selectedLesson === lesson.id;
 
                       return (
                         <button
-                          key={lesson.title}
-                          onClick={() => handleLessonClick(lesson.title, module.title)}
+                          key={lesson.id}
+                          onClick={() => handleLessonClick(lesson.id, module.id)}
                           className={`w-full text-left p-2.5 rounded-md transition-all ${
                             isLessonSelected
                               ? "bg-[#EC5D44]/15 border border-[#EC5D44]/40"
