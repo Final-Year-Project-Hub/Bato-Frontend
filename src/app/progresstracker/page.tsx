@@ -188,7 +188,7 @@ export default function ProgressTrackerPage() {
       />
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden ">
+      <div className="flex flex-1 overflow-hidden">
         {/* Fixed Sidebar */}
         <ProgressSidebar
           modules={roadmapData.modules}
@@ -207,7 +207,7 @@ export default function ProgressTrackerPage() {
           {selectedModule === null ? (
             // SHOW ALL MODULES
             <div>
-              <h2 className="text-2xl font-semibold text-white p-6 sticky top-0 bg-background z-10 border-b border-white/10">
+              <h2 className="text-2xl font-semibold text-foreground p-6 sticky top-0 bg-background z-10 border-b border-border">
                 All Modules
               </h2>
               {roadmapData.modules.map((module, index) => (
