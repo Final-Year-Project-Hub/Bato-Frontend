@@ -234,7 +234,7 @@ export default function ChatSidebar() {
             <div className="flex items-center gap-3 min-w-0">
               {/* Avatar with image or initial */}
               <Avatar className="h-9 w-9">
-                <AvatarImage src={userImage || ""} alt={displayName} />
+                <AvatarImage src={userImage || ""} alt={displayName} className="object-cover" />
                 <AvatarFallback className="bg-primary/15 text-primary font-semibold">
                   {initial}
                 </AvatarFallback>
