@@ -53,9 +53,9 @@ export default function RoadmapDetailClient({ roadmapId }: { roadmapId: string }
     };
   }, [roadmapId]);
 
-  if (loading) return <div className="text-white/70">Loading roadmap…</div>;
-  if (err) return <div className="text-red-400">Error: {err}</div>;
-  if (!data) return <div className="text-white/70">No roadmap found.</div>;
+  if (loading) return <div className="text-muted-foreground">Loading roadmap…</div>;
+  if (err) return <div className="text-red-400 dark:text-red-500">Error: {err}</div>;
+  if (!data) return <div className="text-muted-foreground">No roadmap found.</div>;
 
   return <RoadmapDetail data={data} />;
 }
