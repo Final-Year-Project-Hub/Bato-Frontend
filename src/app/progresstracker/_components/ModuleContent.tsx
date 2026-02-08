@@ -57,7 +57,7 @@ export default function ModuleContent({
 
           return (
             <Card
-              key={lesson.title}
+              key={lesson.id}
               className={`p-4 transition-all group ${
                 isSelected
                   ? "bg-card border-primary/50 shadow-lg shadow-primary/10"
@@ -105,7 +105,7 @@ export default function ModuleContent({
                   </div>
                 </div>
                 <Button
-                  onClick={() => onViewLesson(lesson.title)}
+                  onClick={() => onViewLesson(lesson.id)}
                   variant="ghost"
                   size="sm"
                   className={`${
