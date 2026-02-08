@@ -30,7 +30,6 @@ function splitByH2(markdown: string): Block[] {
       continue;
     }
 
-    // normal: "Core Philosophy\n\n...."
     const [title, ...rest] = chunk.split("\n");
     blocks.push({ title: title.trim(), body: rest.join("\n").trim() });
   }
