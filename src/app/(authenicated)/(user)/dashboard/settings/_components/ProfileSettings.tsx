@@ -347,7 +347,7 @@ export default function ProfileSettings() {
           <CardContent>
             <div className="flex items-center gap-6">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={avatarPreview ?? ""} />
+                <AvatarImage src={avatarPreview ?? ""} className="object-cover" />
                 <AvatarFallback>{getInitials()}</AvatarFallback>
               </Avatar>
 
