@@ -71,10 +71,11 @@ export default function ModuleContent({
                       lesson.completed
                         ? "bg-green-500/20"
                         : isSelected
-                        ? "bg-[#EC5D44]/20"
-                        : "bg-white/5"
+                        ? "bg-primary/20"
+                        : "bg-muted"
                     }`}
                   > */}
+
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
                       isSelected ? "bg-[#EC5D44]/20" : "bg-white/5"
