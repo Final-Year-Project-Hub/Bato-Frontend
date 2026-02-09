@@ -5,6 +5,8 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import { BeautifiedIntroduction } from "./BeautifiedIntro";
+import TopicNavigationButtons from "./TopicNavigationButtons";
+import { Check, CheckCheck } from "lucide-react";
 
 export type LessonResponse = {
   title: string;
@@ -79,20 +81,36 @@ export function Md({ children }: { children: string }) {
   );
 }
 
-export default function LessonPage({ lesson }: { lesson: LessonResponse }) {
-  const s = lesson.sections;
+export interface LessonPageProps {
+  lesson: LessonResponse;
+  currentPhaseId: string;
+  currentTopicId: string;
+  currentTopicTitle: string; 
+
+}
+
+export default function LessonPage({ 
+  lesson, 
+  currentPhaseId, 
+  currentTopicId,
+   currentTopicTitle 
+
+}: LessonPageProps) {  const s = lesson.sections;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
       {/* Header */}
       <header className="space-y-2">
         <h1 className="text-3xl font-bold">{lesson.title}</h1>
+        <div className="flex justify-between">
         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
           <span>
             Phase {lesson.phase_number}: {lesson.phase_title}
           </span>
           <span>• {lesson.difficulty_level}</span>
           <span>• {lesson.estimated_hours} hours</span>
+        </div>
+        <div className="bg-secondary text-black rounded-full flex shrink-0 py-1 px-2 text-sm items-center cursor-pointer"> <CheckCheck className="w-5 h-5 mr-1" /> Mark as Done</div>
         </div>
       </header>
 
@@ -300,6 +318,11 @@ export default function LessonPage({ lesson }: { lesson: LessonResponse }) {
           </div>
         </footer>
       )}
+     <TopicNavigationButtons
+        currentPhaseId={currentPhaseId}
+        currentTopicId={currentTopicId}
+        currentTopicTitle={currentTopicTitle} 
+      />
     </div>
   );
 }

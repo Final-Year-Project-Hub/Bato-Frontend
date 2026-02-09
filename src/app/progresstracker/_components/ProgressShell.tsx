@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { RoadmapResponse } from "../types";
 import ProgressHeader from "./ProgressHeader";
 import ProgressSidebar from "./ProgressSidebar";
+import { RoadmapNavigationProvider } from "./RoadmapNavigationContext";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://bato-backend-a9x8.onrender.com";
@@ -22,10 +23,60 @@ export default function ProgressShell({
 
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<string | null>(null);
+  const [progressData, setProgressData] = useState<any>(null);
 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    console.log("🔍 Progress useEffect triggered with roadmapId:", roadmapId);
+    
+    if (!roadmapId) {
+      console.log("No roadmapId, skipping progress fetch");
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const url = `${baseUrl}/api/roadmap/${roadmapId}/progress`;
+        console.log("📡 Fetching progress from:", url);
+
+        const res = await fetch(url, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        console.log("📥 Progress response status:", res.status, res.statusText);
+
+        if (!res.ok) {
+          const msg = await res.text().catch(() => "");
+          throw new Error(`${res.status} ${res.statusText} ${msg}`);
+        }
+
+        const json = await res.json();
+        console.log("✅ progress tracker", json);
+        
+        if (!cancelled) {
+          setProgressData(json);
+          console.log("💾 progress data stored", json);
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          console.error("❌ progress fetch failed:", e?.message || e);
+        }
+      }
+    })();
+
+    return () => {
+      console.log("🧹 Progress useEffect cleanup");
+      cancelled = true;
+    };
+  }, [roadmapId]);
 
   // keep selection in sync when you are on topic page
   useEffect(() => {
@@ -37,6 +88,8 @@ export default function ProgressShell({
   }, [pathname, searchParams]);
 
   useEffect(() => {
+    if (!roadmapId) return;
+
     let cancelled = false;
 
     (async () => {
@@ -77,6 +130,7 @@ export default function ProgressShell({
   const totalLessons =
     roadmapData?.phases?.reduce((sum, p) => sum + (p.topics?.length ?? 0), 0) ??
     0;
+  const completionPercentage = progressData?.completionPercentage;
 
   const handleViewLesson = (phaseId: string, topicId: string) => {
     setSelectedModule(phaseId);
@@ -104,25 +158,30 @@ export default function ProgressShell({
   if (!roadmapData) return <div className="p-6">No roadmap found.</div>;
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      <ProgressHeader
-        title={roadmapData.goal ?? ""}
-        totalModules={totalModules}
-        totalLessons={totalLessons}
-      />
-
-      <div className="flex flex-1 overflow-hidden">
-        <ProgressSidebar
-          modules={roadmapData.phases}
-          selectedModule={selectedModule}
-          selectedLesson={selectedLesson}
-          onSelectModule={handleSelectModule}
-          onSelectLesson={(lessonId, moduleId) => handleViewLesson(moduleId, lessonId)}
+    <RoadmapNavigationProvider roadmapData={roadmapData} roadmapId={roadmapId}>
+      <div className="h-screen flex flex-col bg-background">
+        <ProgressHeader
+          title={roadmapData.goal ?? ""}
+          totalModules={totalModules}
+          totalLessons={totalLessons}
         />
 
-        {/* THIS is where each page renders */}
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className="flex flex-1 overflow-hidden">
+          <ProgressSidebar
+            modules={roadmapData.phases}
+            selectedModule={selectedModule}
+            selectedLesson={selectedLesson}
+            onSelectModule={handleSelectModule}
+            completionPercentage={completionPercentage}
+            onSelectLesson={(lessonId, moduleId) =>
+              handleViewLesson(moduleId, lessonId)
+            }
+          />
+
+          {/* THIS is where each page renders */}
+          <div className="flex-1 overflow-y-auto">{children}</div>
+        </div>
       </div>
-    </div>
+    </RoadmapNavigationProvider>
   );
 }

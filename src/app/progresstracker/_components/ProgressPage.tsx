@@ -16,6 +16,7 @@ export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
   const [loading, setLoading] = useState(true);
   const [roadmapData, setRoadmanData] = useState<RoadmapResponse | null>(null);
   const streamControllerRef = useRef<AbortController | null>(null);
+
   const router = useRouter();
   let cancelled = false;
 
@@ -35,57 +36,12 @@ export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
       )}&goal=${encodeURIComponent(roadmapData?.goal ?? "")}&roadmapId=${encodeURIComponent(roadmapId)}`,
     );
   };
-  useEffect(() => {
-    let cancelled = false;
 
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
 
-        const res = await fetch(`${baseUrl}/api/roadmap/${roadmapId}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          cache: "no-store",
-        });
-
-        if (!res.ok) {
-          const msg = await res.text().catch(() => "");
-          throw new Error(`${res.status} ${res.statusText} ${msg}`);
-        }
-
-        const json = await res.json();
-
-        const roadmapData = json?.roadmapData;
-        setRoadmanData(roadmapData);
-        console.log(roadmapData);
-
-        if (!roadmapData?.phases) {
-          console.log("Unexpected roadmap response:", json);
-          throw new Error("roadmapData missing or invalid");
-        }
-
-        if (!cancelled) setData(roadmapData);
-      } catch (e: any) {
-        if (!cancelled) setErr(e?.message || "Failed to load roadmap");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [roadmapId]);
 
   // const [roadmapPata] = useState<RoadmapProgress>(SAMPLE_ROADMAP);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<string | null>(null);
-
-  //   const completionPercentage = Math.round(
-  //     (roadmapData.completedModules / roadmapData.totalModules) * 100,
-  //   );
 
   const handleSelectModule = (moduleId: string | null) => {
     setSelectedModule(moduleId);
