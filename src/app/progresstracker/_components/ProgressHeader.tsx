@@ -7,7 +7,7 @@ interface ProgressHeaderProps {
   title: string;
   totalModules: number;
   totalLessons: number;
-  completionPercentage: number;
+  completionPercentage?: number;
 }
 
 export default function ProgressHeader({
@@ -39,7 +39,7 @@ export default function ProgressHeader({
       </div>
 
       {/* Progress Bar */}
-      <div className="px-6 pb-4">
+      <div className="px-6">
         <div className="flex items-center gap-3">
         </div>
       </div>
