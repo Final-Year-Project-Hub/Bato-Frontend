@@ -95,7 +95,7 @@ export const RoadmapCard = ({
 
               <button
                 onClick={() =>
-                  router.push(`/progresstracker`)
+                  router.push(`/progresstracker/${id}`)
                 }
                 className="w-full text-left flex items-center gap-2 px- py-2 text-sm hover:bg-grey transition"
               >

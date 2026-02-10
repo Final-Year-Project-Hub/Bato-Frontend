@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { CheckCheck, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { RoadmapPhase } from "../types";
 import { Separator } from "@/components/ui/separator";
+import { useProgress } from "./ProgressContext";
 
 interface ProgressSidebarProps {
   modules: RoadmapPhase[];
@@ -17,10 +18,14 @@ interface ProgressSidebarProps {
 // Helper function to convert number to Roman numerals
 const toRoman = (num: number): string => {
   const romanNumerals: [number, string][] = [
-    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"],
   ];
-  
-  let result = '';
+
+  let result = "";
   for (const [value, numeral] of romanNumerals) {
     while (num >= value) {
       result += numeral;
@@ -36,13 +41,16 @@ export default function ProgressSidebar({
   selectedLesson,
   onSelectModule,
   onSelectLesson,
-  completionPercentage,
 }: ProgressSidebarProps) {
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(
+    new Set(),
+  );
+  const { progress, isTopicCompleted, isPhaseCompleted } = useProgress();
+  const completionPercentage = progress?.completionPercentage ?? 0;
 
   const toggleModule = (moduleId: string) => {
     const newExpanded = new Set(expandedModules);
-    
+
     if (selectedModule === moduleId) {
       newExpanded.delete(moduleId);
       setExpandedModules(newExpanded);
@@ -57,6 +65,16 @@ export default function ProgressSidebar({
       onSelectModule(moduleId);
     }
   };
+
+  useEffect(() => {
+    if (!selectedModule) return;
+    setExpandedModules((prev) => {
+      if (prev.has(selectedModule)) return prev;
+      const next = new Set(prev);
+      next.add(selectedModule);
+      return next;
+    });
+  }, [selectedModule]);
 
   const handleLessonClick = (lessonId: string, moduleId: string) => {
     if (!expandedModules.has(moduleId)) {
@@ -83,8 +101,9 @@ export default function ProgressSidebar({
             const isExpanded = expandedModules.has(module.id);
             const isModuleSelected = selectedModule === module.id;
             const hasSelectedLesson = module.topics.some(
-              (lesson) => lesson.id === selectedLesson
+              (lesson) => lesson.id === selectedLesson,
             );
+            const moduleCompleted = isPhaseCompleted(module.id);
 
             return (
               <div key={module.id}>
@@ -95,27 +114,27 @@ export default function ProgressSidebar({
                     isModuleSelected && !hasSelectedLesson
                       ? "bg-primary/20 border border-primary/50"
                       : hasSelectedLesson
-                      ? "bg-primary/10 border border-primary/30"
-                      : "hover:bg-accent border border-transparent"
+                        ? "bg-primary/10 border border-primary/30"
+                        : "hover:bg-accent border border-transparent"
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     {/* Module Number/Check */}
-                    {/* <div
+                    <div
                       className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold ${
-                        module.completed
+                        moduleCompleted
                           ? "bg-green-500/20 text-green-500"
                           : isModuleSelected && !hasSelectedLesson
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {module.completed ? (
-                        <CheckCircle2 size={18} className="text-green-500" />
+                      {moduleCompleted ? (
+                        <CheckCheck size={18} className="text-green-500" />
                       ) : (
                         <span>{moduleIndex + 1}</span>
                       )}
-                    </div> */}
+                    </div>
 
                     {/* Module Title */}
                     <div className="flex-1 min-w-0">
@@ -124,8 +143,8 @@ export default function ProgressSidebar({
                           isModuleSelected && !hasSelectedLesson
                             ? "text-foreground"
                             : hasSelectedLesson
-                            ? "text-foreground"
-                            : "text-foreground/80"
+                              ? "text-foreground"
+                              : "text-foreground/80"
                         }`}
                       >
                         {module.title}
@@ -162,11 +181,14 @@ export default function ProgressSidebar({
                   <div className="ml-10 mt-1 space-y-1">
                     {module.topics.map((lesson, lessonIndex) => {
                       const isLessonSelected = selectedLesson === lesson.id;
+                      const lessonCompleted = isTopicCompleted(lesson.id);
 
                       return (
                         <button
                           key={lesson.id}
-                          onClick={() => handleLessonClick(lesson.id, module.id)}
+                          onClick={() =>
+                            handleLessonClick(lesson.id, module.id)
+                          }
                           className={`w-full text-left p-2.5 rounded-md transition-all ${
                             isLessonSelected
                               ? "bg-primary/15 border border-primary/40"
@@ -175,17 +197,17 @@ export default function ProgressSidebar({
                         >
                           <div className="flex items-center gap-3">
                             {/* Lesson Number/Check */}
-                            {/* <div
-                              className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                                lesson.completed
+                            <div
+                              className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
+                                lessonCompleted
                                   ? "bg-green-500/20"
                                   : isLessonSelected
-                                  ? "bg-primary/30"
-                                  : "bg-muted"
+                                    ? "bg-primary/30"
+                                    : "bg-muted"
                               }`}
                             >
-                              {lesson.completed ? (
-                                <CheckCircle2
+                              {lessonCompleted ? (
+                                <CheckCheck
                                   size={14}
                                   className="text-green-500"
                                 />
@@ -200,7 +222,7 @@ export default function ProgressSidebar({
                                   {toRoman(lessonIndex + 1)}
                                 </span>
                               )}
-                            </div> */}
+                            </div>
 
                             {/* Lesson Title */}
                             <p

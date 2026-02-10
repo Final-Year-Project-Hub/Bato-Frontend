@@ -5,6 +5,11 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import { BeautifiedIntroduction } from "./BeautifiedIntro";
+import TopicNavigationButtons from "./TopicNavigationButtons";
+import { Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import QuizModal from "./QuizModal";
+import { useState } from "react";
 
 export type LessonResponse = {
   title: string;
@@ -79,22 +84,54 @@ export function Md({ children }: { children: string }) {
   );
 }
 
-export default function LessonPage({ lesson }: { lesson: LessonResponse }) {
+export interface LessonPageProps {
+  lesson: LessonResponse;
+  currentPhaseId: string;
+  currentTopicId: string;
+  currentTopicTitle: string;
+  roadmapId: string;
+}
+
+export default function LessonPage({
+  lesson,
+  currentPhaseId,
+  currentTopicId,
+  currentTopicTitle,
+  roadmapId,
+}: LessonPageProps) {
   const s = lesson.sections;
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-10">
       {/* Header */}
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold">{lesson.title}</h1>
-        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-          <span>
-            Phase {lesson.phase_number}: {lesson.phase_title}
-          </span>
-          <span>• {lesson.difficulty_level}</span>
-          <span>• {lesson.estimated_hours} hours</span>
+        <div className="flex justify-between">
+          <h1 className="text-3xl font-bold">{lesson.title}</h1>
+          <Button onClick={() => setIsQuizOpen(true)} className="gap-2">
+            <Trophy size={16} />
+            Take Quiz
+          </Button>
+        </div>
+        <div className="flex justify-between">
+          <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+            <span>
+              Phase {lesson.phase_number}: {lesson.phase_title}
+            </span>
+            <span>• {lesson.difficulty_level}</span>
+            <span>• {lesson.estimated_hours} hours</span>
+          </div>
         </div>
       </header>
+
+      <QuizModal
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        roadmapId={roadmapId}
+        phaseId={currentPhaseId}
+        topicId={currentTopicId}
+        topicTitle={lesson.title}
+      />
 
       {/* Introduction */}
       {s?.introduction?.markdown && (
@@ -300,6 +337,11 @@ export default function LessonPage({ lesson }: { lesson: LessonResponse }) {
           </div>
         </footer>
       )}
+      <TopicNavigationButtons
+        currentPhaseId={currentPhaseId}
+        currentTopicId={currentTopicId}
+        currentTopicTitle={currentTopicTitle}
+      />
     </div>
   );
 }

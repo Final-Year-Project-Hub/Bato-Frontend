@@ -8,10 +8,6 @@ import { toast } from "sonner";
 
 export default function Page() {
   const params = useParams();
-  const router = useRouter();
-  const { user, refresh } = useAuth();
-  const [isReady, setIsReady] = useState(false);
-  
   const initialChatId = useMemo(() => {
     const chatIdParam = params?.chatId;
     if (Array.isArray(chatIdParam)) {

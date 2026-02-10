@@ -28,77 +28,50 @@ async function readStreamToEnd(body: ReadableStream<Uint8Array>) {
   return cleaned || full.trim();
 }
 
-/**
- * Converts "{{" -> "{" and "}}" -> "}" but ONLY outside JSON strings.
- * This is necessary because your model returns JSON-ish with double braces everywhere.
- */
-function normalizeDoubleBracesOutsideStrings(input: string) {
+function stripCodeFences(raw: string) {
+  return (raw || "").replace(/```json|```/g, "").trim();
+}
+
+function extractJsonBlockSafe(raw: string) {
+  const s = stripCodeFences(raw);
+  const start = s.indexOf("{");
+  if (start === -1) throw new Error("No JSON object found in response");
+
   let out = "";
-  let i = 0;
+  let depth = 0;
 
   let inString = false;
   let escape = false;
 
-  while (i < input.length) {
-    const ch = input[i];
-    const next = input[i + 1];
+  for (let i = start; i < s.length; i++) {
+    const ch = s[i];
+    out += ch;
 
     if (inString) {
-      out += ch;
-
-      if (escape) {
-        escape = false;
-      } else if (ch === "\\") {
-        escape = true;
-      } else if (ch === '"') {
-        inString = false;
-      }
-
-      i++;
+      if (escape) escape = false;
+      else if (ch === "\\") escape = true;
+      else if (ch === '"') inString = false;
       continue;
     }
 
-    // not in string
     if (ch === '"') {
       inString = true;
-      out += ch;
-      i++;
       continue;
     }
 
-    if (ch === "{" && next === "{") {
-      out += "{";
-      i += 2;
-      continue;
+    if (ch === "{") depth++;
+    if (ch === "}") {
+      depth--;
+      if (depth === 0) return out;
     }
-
-    if (ch === "}" && next === "}") {
-      out += "}";
-      i += 2;
-      continue;
-    }
-
-    out += ch;
-    i++;
   }
 
-  return out;
+  throw new Error("Unterminated JSON object in response");
 }
 
-function extractJsonBlock(raw: string) {
-  const s = (raw || "").trim();
-  const first = s.indexOf("{");
-  const last = s.lastIndexOf("}");
-  if (first === -1 || last === -1 || last <= first) {
-    throw new Error("No JSON object found in response");
-  }
-  return s.slice(first, last + 1);
-}
-
-function parseLessonJsonNew(raw: string) {
-  let s = extractJsonBlock(raw);
-  s = normalizeDoubleBracesOutsideStrings(s);
-  return JSON.parse(s);
+function parseLessonJson(raw: string) {
+  const jsonText = extractJsonBlockSafe(raw);
+  return JSON.parse(jsonText);
 }
 
 export default function TopicClient({
@@ -139,7 +112,8 @@ export default function TopicClient({
         let url =
           `${baseUrl}/api/topic/stream/${encodeURIComponent(
             phaseId,
-          )}/${encodeURIComponent(topicId)}` + `?goal=${encodeURIComponent(goal)}`;
+          )}/${encodeURIComponent(topicId)}` +
+          `?goal=${encodeURIComponent(goal)}`;
 
         if (roadmapIdFromQuery) {
           url += `&roadmapId=${encodeURIComponent(roadmapIdFromQuery)}`;
@@ -159,9 +133,9 @@ export default function TopicClient({
 
         const finalText = await readStreamToEnd(res.body);
 
-        const json = parseLessonJsonNew(finalText) as LessonResponse;
+        const json = parseLessonJson(finalText) as LessonResponse;
 
-        console.log("✅ lesson parsed:", json);
+        console.log("lesson parsed:", json);
         setLesson(json);
       } catch (e: any) {
         if (e?.name === "AbortError") return;
@@ -176,7 +150,15 @@ export default function TopicClient({
 
   if (loading) return <div className="p-6">Loading...</div>;
   if (err) return <div className="p-6 text-red-500">{err}</div>;
-  if (!lesson) return <div className="p-6">No lesson found.</div>;
+  if (!lesson) return <div className="p-6">Loading...</div>;
 
-  return <LessonPage lesson={lesson} />;
+  return (
+     <LessonPage
+      lesson={lesson}
+      currentPhaseId={phaseId}
+      currentTopicId={topicId}
+      currentTopicTitle={lesson.title} 
+      roadmapId={roadmapId}
+    />
+  );
 }
