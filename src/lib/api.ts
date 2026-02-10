@@ -8,16 +8,49 @@ export async function apiFetch<K extends keyof ApiRoutes>(
 ): Promise<ApiRoutes[K]> {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${API_BASE_URL}${String(path)}`, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
-      ...options?.headers,
-    },
-    ...options,
-  });
+  // Check if body is FormData
+  const isFormData = options?.body instanceof FormData;
 
-  const data = await res.json().catch(() => null);
-  return data;
+  // Build headers conditionally
+  const headers: Record<string, string> = {
+    Authorization: token ? `Bearer ${token}` : "",
+  };
+
+  // Only add Content-Type for non-FormData requests
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  // Merge with any additional headers from options
+  if (options?.headers) {
+    const additionalHeaders = options.headers as Record<string, string>;
+    Object.assign(headers, additionalHeaders);
+  }
+
+  try {
+    console.log("API Fetch - URL:", `${API_BASE_URL}${String(path)}`);
+    console.log("API Fetch - Method:", options?.method || "GET");
+    console.log("API Fetch - Is FormData:", isFormData);
+
+    const res = await fetch(`${API_BASE_URL}${String(path)}`, {
+      credentials: "include",
+      headers,
+      ...options,
+    });
+
+    console.log("API Fetch - Response Status:", res.status);
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json().catch(() => null);
+    console.log("API Fetch - Response Data:", data);
+    
+    return data;
+  } catch (error) {
+    console.error("API Fetch Error:", error);
+    throw error;
+  }
 }

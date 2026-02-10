@@ -113,7 +113,7 @@ export type ApiRoutes = {
     image: string;
   };
 
-  // GET USER BY ID - NEW ENDPOINT
+  // GET USER BY ID
   "/api/user/getUserById/:id": {
     success: boolean;
     message: string;
@@ -158,6 +158,32 @@ export type ApiRoutes = {
       isSelected: boolean;
       createdAt: string;
       updatedAt: string;
+    };
+  };
+
+  // ADMIN DOCUMENT UPLOAD
+  "/api/admin/documents/upload": {
+    success: boolean;
+    message?: string;
+    data: {
+      id?: string;
+      frameworkKey: string;
+      frameworkName: string;
+      version: string;
+      baseUrl: string;
+      extensions: string;
+      subdirectory?: string;
+      removePatterns?: string;
+      cleanWhitespace: boolean;
+      pathPrefix?: string;
+      stripNumPrefix?: boolean;
+      replaceExts?: string;
+      targetTokens: number;
+      maxTokens: number;
+      collectionName: string;
+      recreateCollection: boolean;
+      createdAt?: string;
+      updatedAt?: string;
     };
   };
 };

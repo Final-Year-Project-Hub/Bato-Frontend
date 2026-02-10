@@ -19,6 +19,7 @@ import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import LogoutModal from "./LogoutModal";
 import { apiFetch } from "@/lib/api";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const roadmaps = [
   "React Roadmap",
@@ -47,6 +48,7 @@ export default function ChatSidebar() {
   const email = auth.user?.email || "";
   const displayName = auth.user?.name || auth.user?.email || "User";
   const initial = (displayName?.trim()?.[0] || "U").toUpperCase();
+  const userImage = auth.user?.image; // Get user image from auth
 
   const { getChats } = useChat();
   const [isLoadingChats, setIsLoadingChats] = useState(false);
@@ -131,7 +133,7 @@ export default function ChatSidebar() {
     <>
       <aside
         className={clsx(
-          "h-screen bg-background/10 border-r border-border flex flex-col transition-all duration-300 overflow-hidden",
+          "h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 overflow-hidden",
           collapsed ? "w-16" : "w-75",
         )}
       >
@@ -183,7 +185,7 @@ export default function ChatSidebar() {
 
         {/* Chats title */}
         {!collapsed && (
-          <p className="mt-6 px-4 text-foreground text-[14px] font-medium">
+          <p className="mt-6 px-4 text-sidebar-foreground text-[14px] font-medium">
             Chats
           </p>
         )}
@@ -199,13 +201,13 @@ export default function ChatSidebar() {
           ) : (
             <>
               {isLoadingChats && (
-                <div className="px-3 py-2 text-xs text-muted-foreground">
+                <div className="px-3 py-2 text-xs text-sidebar-foreground/60">
                   Loading...
                 </div>
               )}
 
               {!isLoadingChats && chats.length === 0 && (
-                <div className="px-3 py-2 text-xs text-muted-foreground">
+                <div className="px-3 py-2 text-xs text-sidebar-foreground/60">
                   No chats yet
                 </div>
               )}
@@ -225,63 +227,52 @@ export default function ChatSidebar() {
           )}
         </div>
 
-        {/*  Roadmaps pinned at bottom */}
-        {/* <div className="border-t border-border pt-3 pb-4">
-          {!collapsed && (
-            <p className="px-4 text-foreground text-[14px] font-medium transition-colors">
-              Roadmaps
-            </p>
-          )}
-
-          <div className="mt-2 flex flex-col items-center gap-1 px-2">
-            {collapsed ? (
-              <SidebarItem
-                icon={<GitBranch size={18} />}
-                label="Roadmaps"
-                collapsed
-              />
-            ) : (
-              roadmaps.map((item, i) => (
-                <SidebarItem
-                  key={i}
-                  icon={<GitBranch size={18} />}
-                  label={item}
-                  collapsed={false}
-                />
-              ))
-            )}
-          </div>
-        </div> */}
-
-        <div className="w-full border-t border-grey px-4 py-3">
+        {/* User Profile Section */}
+        {/* User Profile Section */}
+        <div className="w-full border-t border-sidebar-border px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            {/* Left: avatar + info */}
-            <div className="flex items-center gap-3 min-w-0">
-              {/* Initial circle */}
-              <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
-                {initial}
-              </div>
+            {/* Left: avatar + info - clickable to go to settings */}
+            <button
+              onClick={() => router.push("/dashboard/settings")}
+              className="flex items-center gap-3 min-w-0 hover:bg-sidebar-accent/50 rounded-md px-2 py-1.5 transition-colors flex-1"
+            >
+              {/* Avatar with image or initial */}
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage
+                  src={userImage || ""}
+                  alt={displayName}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-primary/15 text-primary font-semibold">
+                  {initial}
+                </AvatarFallback>
+              </Avatar>
 
               {/* Name + email */}
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {auth.user?.name ?? "User"}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {email}
-                </p>
-              </div>
-            </div>
+              {!collapsed && (
+                <div className="min-w-0 text-left flex-1">
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">
+                    {auth.user?.name ?? "User"}
+                  </p>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">
+                    {email}
+                  </p>
+                </div>
+              )}
+            </button>
 
             {/* Right: logout */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowLogout(true)}
-              className="text-white hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-            </Button>
+            {!collapsed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowLogout(true)}
+                className="text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent shrink-0"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            )}
+
             <LogoutModal
               open={showLogout}
               onClose={() => setShowLogout(false)}
@@ -324,9 +315,11 @@ function SidebarLinkItem({
         prefetch={true}
         className={clsx(
           "flex items-center w-full rounded-md transition-colors",
-          "text-foreground text-[14px]",
+          "text-sidebar-foreground text-[14px]",
           "gap-3 px-3 py-2 justify-start",
-          isActive ? "bg-muted" : "hover:bg-muted/50",
+          isActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
         )}
       >
         <span>{icon}</span>
@@ -354,8 +347,9 @@ function SidebarItem({
       <button
         onClick={onClick}
         className={clsx(
-          "flex items-center w-full rounded-md transition-colors hover:bg-muted/50",
-          "text-foreground text-[14px]",
+          "flex items-center w-full rounded-md transition-colors",
+          "text-sidebar-foreground text-[14px]",
+          "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
           collapsed ? "justify-center h-10" : "gap-3 px-3 py-2 justify-start",
         )}
       >
@@ -365,7 +359,7 @@ function SidebarItem({
 
       {collapsed && (
         <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition z-50 pointer-events-none">
-          <div className="bg-muted text-foreground text-xs px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap">
+          <div className="bg-popover text-popover-foreground text-xs px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap border border-border">
             {label}
           </div>
         </div>
@@ -385,7 +379,7 @@ function HoverButton({
     <div className="relative group">
       <button
         onClick={onClick}
-        className="w-10 h-10 flex items-center justify-center text-foreground transition-colors"
+        className="w-10 h-10 flex items-center justify-center text-sidebar-foreground hover:text-sidebar-accent-foreground transition-colors"
       >
         <PanelLeft size={18} />
         <Tooltip text={tooltip} />
@@ -423,7 +417,7 @@ function HoverButtonCollapsed({
 function Tooltip({ text }: { text: string }) {
   return (
     <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition z-50 pointer-events-none">
-      <div className="bg-muted text-foreground text-xs px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap">
+      <div className="bg-popover text-popover-foreground text-xs px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap border border-border">
         {text}
       </div>
     </div>

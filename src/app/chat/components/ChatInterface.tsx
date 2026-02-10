@@ -633,28 +633,28 @@ export default function ChatInterface({
   const typedText = fullText.slice(0, typedLength);
 
   const renderChatInput = () => (
-    <div className="flex items-center gap-3 w-full max-w-3xl h-14 bg-[#2A2A2A] rounded-full px-6 border border-white/10">
+    <div className="flex items-center gap-3 w-full max-w-3xl h-14 bg-card rounded-full px-6 border border-border">
       <Image src="/images/bato.png" alt="Bato" width={32} height={32} />
       <input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         placeholder="Ask me a Roadmap"
-        className="flex-1 bg-transparent outline-none text-base text-white placeholder:text-gray-400"
+        className="flex-1 bg-transparent outline-none text-base text-foreground placeholder:text-muted-foreground"
         disabled={loading}
       />
       <button
         onClick={sendMessage}
         disabled={loading || !message.trim()}
-        className="bg-[#E96559] rounded-full p-2.5 disabled:opacity-60"
+        className="bg-primary rounded-full p-2.5 disabled:opacity-60 hover:opacity-90 transition-opacity"
       >
-        <ArrowUp size={22} className="text-[#282828]" />
+        <ArrowUp size={22} className="text-primary-foreground" />
       </button>
     </div>
   );
 
   return (
-    <main className="h-screen flex-1 relative flex flex-col bg-grey p-4 sm:p-6">
+    <main className="h-screen flex-1 relative flex flex-col bg-background p-4 sm:p-6">
       {/* Top Right Menu */}
       <div className="absolute top-4 right-6 z-20 flex items-center gap-2">
         <div
@@ -670,17 +670,17 @@ export default function ChatInterface({
         />
         <button
           onClick={() => setOpenMenu((v) => !v)}
-          className="flex items-center gap-2 text-white/80 hover:text-white"
+          className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors"
         >
           <User size={18} />
           <ChevronDown size={14} />
         </button>
 
         {openMenu && (
-          <div className="absolute right-0 mt-30 w-40 bg-[#2A2A2A] border border-white/10 rounded-lg shadow-lg">
+          <div className="absolute right-0 mt-30 w-40 bg-popover border border-border rounded-lg shadow-lg">
             <button
               onClick={() => router.push("./dashboard")}
-              className="w-full px-4 py-2 flex gap-2 text-sm text-white/80 hover:bg-white/5"
+              className="w-full px-4 py-2 flex gap-2 text-sm text-popover-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               <LayoutDashboard size={16} /> Dashboard
             </button>
@@ -690,7 +690,7 @@ export default function ChatInterface({
                 setOpenMenu(false);
                 setShowLogout(true);
               }}
-              className="w-full px-4 py-2 flex gap-2 text-sm text-white/80 hover:bg-white/5"
+              className="w-full px-4 py-2 flex gap-2 text-sm text-popover-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               <LogOut size={16} /> Logout
             </button>
@@ -700,11 +700,11 @@ export default function ChatInterface({
 
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-6">
-          <p className="text-[#DDDDDD] text-[20px] text-center">
-            <span className="text-[#DDDDDD]">
+          <p className="text-blue text-[20px] text-center">
+            <span className="text-blue">
               {typedText.slice(0, normalLength)}
             </span>
-            <span className="text-[#E96559]">
+            <span className="text-primary">
               {typedText.slice(normalLength)}
             </span>
             {typedLength < fullText.length && (
@@ -845,9 +845,9 @@ function ChatBubble({
       <div className="space-y-6">
         {/* Header */}
         {goal && (
-          <div className="bg-linear-to-r from-[#E96559]/20 to-transparent p-4 rounded-lg border-l-4 border-[#E96559]">
-            <h2 className="text-xl font-bold text-white mb-2">{goal}</h2>
-            {metadata && <p className="text-sm text-white/70">{metadata}</p>}
+          <div className="bg-primary/10 p-4 rounded-lg border-l-4 border-primary">
+            <h2 className="text-xl font-bold text-foreground mb-2">{goal}</h2>
+            {metadata && <p className="text-sm text-muted-foreground">{metadata}</p>}
           </div>
         )}
 
@@ -856,15 +856,15 @@ function ChatBubble({
           {phases.map((phase, idx) => (
             <div
               key={idx}
-              className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-[#E96559]/50 transition-colors"
+              className="bg-card/50 rounded-lg p-4 border border-border hover:border-primary/50 transition-colors"
             >
               {/* Phase Header */}
               <div className="flex items-start justify-between mb-3">
-                <h3 className="text-lg font-bold text-[#E96559]">
+                <h3 className="text-lg font-bold text-primary">
                   {phase.title}
                 </h3>
                 {phase.hours && (
-                  <span className="text-xs bg-[#E96559]/20 text-[#E96559] px-2 py-1 rounded-full">
+                  <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
                     {phase.hours}
                   </span>
                 )}
@@ -872,7 +872,7 @@ function ChatBubble({
 
               {/* Phase Description */}
               {phase.description && (
-                <p className="text-sm text-white/80 mb-3">
+                <p className="text-sm text-foreground/80 mb-3">
                   {phase.description}
                 </p>
               )}
@@ -885,8 +885,8 @@ function ChatBubble({
                       key={topicIdx}
                       className={`text-sm ${
                         topic.isSubtopic
-                          ? "ml-6 text-white/60 pl-3 border-l-2 border-white/20"
-                          : "text-white/80"
+                          ? "ml-6 text-muted-foreground pl-3 border-l-2 border-border"
+                          : "text-foreground/80"
                       }`}
                     >
                       {topic.text
@@ -910,6 +910,7 @@ function ChatBubble({
                   `/dashboard/my-roadmaps/${encodeURIComponent(roadmapId)}`,
                 );
               }}
+              className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
               View Full Roadmap →
             </button>
@@ -925,19 +926,19 @@ function ChatBubble({
     return lines.map((line, idx) => {
       if (line.startsWith("Roadmap:")) {
         return (
-          <div key={idx} className="text-lg font-bold mb-2">
+          <div key={idx} className="text-lg font-bold mb-2 text-foreground">
             {line}
           </div>
         );
       } else if (line.startsWith("## Phase")) {
         return (
-          <div key={idx} className="text-base font-bold mt-4 mb-2">
+          <div key={idx} className="text-base font-bold mt-4 mb-2 text-foreground">
             {line.replace("## ", "")}
           </div>
         );
       } else if (line.trim()) {
         return (
-          <div key={idx} className="text-sm">
+          <div key={idx} className="text-sm text-foreground/90">
             {line}
           </div>
         );
@@ -951,10 +952,10 @@ function ChatBubble({
       <div
         className={`rounded-2xl px-4 py-3 leading-relaxed border ${
           isUser
-            ? "max-w-[80%] bg-[#E96559] text-foreground border-white/10"
+            ? "max-w-[80%] bg-primary text-primary-foreground border-border"
             : isRoadmap && !isStreaming
-              ? "w-full bg-[#2A2A2A] text-white border-white/10"
-              : "max-w-[80%] bg-[#2A2A2A] text-white border-white/10"
+              ? "w-full bg-card text-card-foreground border-border"
+              : "max-w-[80%] bg-card text-card-foreground border-border"
         }`}
       >
         {isUser ? (

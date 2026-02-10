@@ -156,4 +156,21 @@ textarea:-webkit-autofill {
   color: var(--foreground);
   font-weight: bold;
 }
+/* Autofill styles - adapts to theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+}
+
+/* For input fields with grey background */
+input.bg-grey:-webkit-autofill,
+input.bg-grey:-webkit-autofill:hover,
+input.bg-grey:-webkit-autofill:focus,
+input.bg-grey:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(var(--grey)) inset !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+}
 

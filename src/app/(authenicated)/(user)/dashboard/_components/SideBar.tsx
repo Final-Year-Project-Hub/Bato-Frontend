@@ -125,11 +125,14 @@ export default function SideBar({
       <div className="flex-1" />
       <div className="w-full border-t border-grey px-4 py-3">
         <div className="flex items-center justify-between gap-3">
-          {/* Left: avatar + info */}
-          <div className="flex items-center gap-3 min-w-0">
+          {/* Left: avatar + info - clickable to go to settings */}
+          <button
+            onClick={() => onViewChange("settings")}
+            className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity flex-1"
+          >
             {/* Avatar with image or initial */}
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={userImage || ""} alt={displayName} />
+            <Avatar className="h-9 w-9 flex-shrink-0">
+              <AvatarImage src={userImage || ""} alt={displayName} className="object-cover" />
               <AvatarFallback className="bg-primary/15 text-primary font-semibold">
                 {initial}
               </AvatarFallback>
@@ -137,14 +140,14 @@ export default function SideBar({
 
             {/* Name + email */}
             {!collapsed && (
-              <div className="min-w-0">
+              <div className="min-w-0 text-left flex-1">
                 <p className="text-sm font-medium text-foreground truncate">
                   {auth.user?.name ?? "User"}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">{email}</p>
               </div>
             )}
-          </div>
+          </button>
 
           {/* Right: logout */}
           {!collapsed && (
@@ -152,7 +155,7 @@ export default function SideBar({
               variant="ghost"
               size="sm"
               onClick={() => setShowLogout(true)}
-              className="text-white hover:text-foreground"
+              className="text-card-foreground hover:text-foreground flex-shrink-0"
             >
               <LogOut className="h-4 w-4" />
             </Button>
@@ -203,7 +206,7 @@ function SidebarItem({
 
       {collapsed && (
         <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition z-50 pointer-events-none">
-          <div className="bg-[#2A2A2A] text-white text-xs px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap">
+          <div className="bg-[#2A2A2A] text-card-foreground text-xs px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap">
             {label}
           </div>
         </div>
@@ -256,7 +259,7 @@ function HoverButtonCollapsed({
 function Tooltip({ text }: { text: string }) {
   return (
     <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition z-50 pointer-events-none">
-      <div className="bg-[#2A2A2A] text-white text-xs px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap">
+      <div className="bg-[#2A2A2A] text-card-foreground text-xs px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap">
         {text}
       </div>
     </div>

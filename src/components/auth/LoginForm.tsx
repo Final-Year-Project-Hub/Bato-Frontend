@@ -72,6 +72,21 @@ export default function LoginForm() {
     return "";
   };
 
+  const handleGoogleLogin = async () => {
+    try{
+    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://bato-backend-a9x8.onrender.com";
+  const response =await fetch(`${backendUrl}/auth/google`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  } catch (error) {
+    console.error("Google login error:", error);
+  }
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
     const toastId = toast.loading("Signing you in...");
 
@@ -103,6 +118,22 @@ export default function LoginForm() {
         await refresh();
 
         const userRole = res.data?.user?.role || res.data?.role;
+        const userName = res.data?.user?.name || "User";
+
+        // Show role-specific success toast
+        if (userRole === "admin" || userRole === "ADMIN") {
+          toast.success("Admin login successful", {
+            id: toastId,
+            description: "Welcome to the Admin Dashboard",
+            duration: 2500,
+          });
+        } else {
+          toast.success("Login successful", {
+            id: toastId,
+            description: `Welcome back, ${userName}!`,
+            duration: 2500,
+          });
+        }
 
         setTimeout(() => {
           if (userRole === "admin" || userRole === "ADMIN") {
