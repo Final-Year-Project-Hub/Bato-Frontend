@@ -158,6 +158,7 @@ export default function TopicClient({
       currentPhaseId={phaseId}
       currentTopicId={topicId}
       currentTopicTitle={lesson.title} 
+      roadmapId={roadmapId}
     />
   );
 }

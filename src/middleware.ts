@@ -49,6 +49,8 @@ export function middleware(req: NextRequest) {
   const isProtected = isChat || isDashboard || isAdmin;
   if (!isProtected) return NextResponse.next();
 
+  
+
   const token = req.cookies.get("accessToken")?.value;
   if (!token) return redirectToLogin(req);
 
