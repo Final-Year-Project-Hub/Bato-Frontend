@@ -1,11 +1,17 @@
+import { Suspense } from "react";
 import FAQ from "./_components/Faq";
 import Features from "./_components/Features";
 import Hero from "./_components/Hero";
 import HowItWorks from "./_components/HowItWorks";
+import TokenBootstrap from "./_components/TokenBootstrap";
 
 export default function Home() {
   return (
     <main>
+      <Suspense fallback={null}>
+        <TokenBootstrap />
+      </Suspense>
+
       <section id="home">
         <Hero />
       </section>
