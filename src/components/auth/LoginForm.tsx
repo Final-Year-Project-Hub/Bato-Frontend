@@ -72,6 +72,21 @@ export default function LoginForm() {
     return "";
   };
 
+  const handleGoogleLogin = async () => {
+    try{
+    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://bato-backend-a9x8.onrender.com";
+  const response =await fetch(`${backendUrl}/auth/google`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  } catch (error) {
+    console.error("Google login error:", error);
+  }
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
     const toastId = toast.loading("Signing you in...");
 
