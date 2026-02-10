@@ -15,7 +15,6 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { toast } from "sonner";
 
-// Define proper response type
 interface LoginResponse {
   success: boolean;
   message?: string;
@@ -45,7 +44,6 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  // Helper function to provide better error descriptions
   const getErrorDescription = (message: string): string => {
     const lowerMessage = message.toLowerCase();
 
@@ -93,7 +91,6 @@ export default function LoginForm() {
           duration: 2500,
         });
 
-        // IMPORTANT: set cookies on localhost so middleware can read them
         await fetch("/api/session/set", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -103,7 +100,6 @@ export default function LoginForm() {
           }),
         });
 
-        // Refresh auth state to get user data
         await refresh();
 
         const userRole = res.data?.user?.role || res.data?.role;
@@ -116,7 +112,6 @@ export default function LoginForm() {
           }
         }, 800);
       } else {
-        // Show specific error message from backend
         const errorMessage = res.message || "Login failed";
 
         toast.error(errorMessage, {
@@ -125,7 +120,6 @@ export default function LoginForm() {
         });
       }
     } catch (error: unknown) {
-      // Handle network errors or unexpected errors
       const err = error as Error;
       const errorMessage = err?.message || "Unable to connect to server";
 
@@ -140,25 +134,99 @@ export default function LoginForm() {
     }
   };
 
+  // Google Login with Fetch and Full Debugging
+  const handleGoogleLogin = async () => {
+    console.log("[Google Login] Started");
+    const toastId = toast.loading("Connecting to Google...");
+
+    try {
+      const backendUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://bato-backend-a9x8.onrender.com";
+
+      console.log("[Google Login] Backend URL:", backendUrl);
+      console.log("[Google Login] Fetching from:", `${backendUrl}/auth/google`);
+        window.location.href=`${backendUrl}/auth/google`;
+      // const response = await fetch(`${backendUrl}/auth/google`, {
+      //   method: "GET",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      // });
+
+  //     console.log("[Google Login] Response status:", response.status);
+  //     console.log("[Google Login] Response ok:", response.ok);
+  //     console.log("[Google Login] Response headers:", Object.fromEntries(response.headers.entries()));
+
+  //     if (!response.ok) {
+  //       const errorText = await response.text();
+  //       console.error("[Google Login] Response not OK. Status:", response.status);
+  //       console.error("[Google Login] Error text:", errorText);
+        
+  //       toast.error("Unable to connect to Google", {
+  //         id: toastId,
+  //         description: `Server error: ${response.status}`,
+  //       });
+  //       return;
+  //     }
+
+  //     const data = await response.json();
+  //     console.log("[Google Login] Response data:", data);
+
+  //     if (data.success && data.authUrl) {
+  //       console.log("[Google Login] Auth URL received:", data.authUrl);
+        
+  //       sessionStorage.setItem('google_login_flow', 'true');
+  //       toast.dismiss(toastId);
+        
+  //       console.log("[Google Login] Redirecting to Google...");
+        
+  //       // Redirect browser to Google OAuth page
+  //       window.location.href = data.authUrl;
+  //     } else {
+  //       console.error("[Google Login] Invalid response structure:", data);
+        
+  //       toast.error("Unable to connect to Google", {
+  //         id: toastId,
+  //         description: data.message || "Invalid server response",
+  //       });
+  //     }
+    } catch (error) {
+      console.error("[Google Login] Fetch error caught:", error);
+      console.error("[Google Login] Error name:", (error as Error).name);
+      console.error("[Google Login] Error message:", (error as Error).message);
+      console.error("[Google Login] Full error:", error);
+
+      const err = error as Error;
+      
+      if (err.message.includes("CORS") || err.message.includes("fetch")) {
+        toast.error("Connection blocked", {
+          id: toastId,
+          description: "CORS policy blocking request. Contact support.",
+        });
+      } else {
+        toast.error("Connection failed", {
+          id: toastId,
+          description: err.message || "Please check your internet connection",
+        });
+      }
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-background flex items-center justify-center px-4">
-      {/* LOGO */}
       <div className="absolute top-6 right-6 z-50">
         <Logo />
       </div>
 
-      {/* MAIN WRAPPER */}
       <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row">
-        {/* LEFT IMAGE */}
         <div
           className="hidden lg:block lg:w-7/12 min-h-[70vh] bg-cover bg-center rounded-l-2xl"
           style={{ backgroundImage: "url('/images/path.png')" }}
         />
 
-        {/* RIGHT CARD */}
         <div className="w-full lg:w-5/12 flex items-center justify-center py-10 lg:py-0">
           <Card className="w-full max-w-md px-8 py-8 rounded-2xl lg:rounded-l-none bg-background border border-border">
-            {/* HEADER */}
             <div className="text-center mb-6">
               <h2 className="text-2xl font-semibold text-primary">
                 Welcome back!!!
@@ -168,7 +236,6 @@ export default function LoginForm() {
               </p>
             </div>
 
-            {/* FORM */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label className="text-sm text-foreground">Email</label>
@@ -221,7 +288,6 @@ export default function LoginForm() {
               </Button>
             </form>
 
-            {/* SOCIAL */}
             <div className="mt-4">
               <div className="flex items-center">
                 <span className="flex-1 h-px bg-border" />
@@ -231,7 +297,11 @@ export default function LoginForm() {
                 <span className="flex-1 h-px bg-border" />
               </div>
 
-              <Button className="w-full h-10 bg-grey text-foreground flex items-center justify-center gap-3 hover:bg-grey/80 font-medium mt-4 border border-border">
+              <Button
+                onClick={handleGoogleLogin}
+                type="button"
+                className="w-full h-10 bg-grey text-foreground flex items-center justify-center gap-3 hover:bg-grey/80 font-medium mt-4 border border-border"
+              >
                 <FcGoogle size={18} /> Google
               </Button>
 
