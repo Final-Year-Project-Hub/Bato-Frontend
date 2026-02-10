@@ -74,6 +74,21 @@ export default function LoginForm() {
     return "";
   };
 
+  const handleGoogleLogin = async () => {
+    try{
+    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://bato-backend-a9x8.onrender.com";
+  const response =await fetch(`${backendUrl}/auth/google`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  } catch (error) {
+    console.error("Google login error:", error);
+  }
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
     const toastId = toast.loading("Signing you in...");
 
@@ -241,7 +256,11 @@ export default function LoginForm() {
                 <span className="flex-1 h-px bg-border" />
               </div>
 
-              <Button className="w-full h-10 bg-grey text-foreground flex items-center justify-center gap-3 hover:bg-grey/80 font-medium mt-4 border border-border">
+              <Button 
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full h-10 bg-grey text-foreground flex items-center justify-center gap-3 hover:bg-grey/80 font-medium mt-4 border border-border"
+              >
                 <FcGoogle size={18} /> Google
               </Button>
 
