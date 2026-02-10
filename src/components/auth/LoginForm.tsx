@@ -74,6 +74,21 @@ export default function LoginForm() {
     return "";
   };
 
+  const handleGoogleLogin = async () => {
+    try{
+    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://bato-backend-a9x8.onrender.com";
+  const response =await fetch(`${backendUrl}/auth/google`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  } catch (error) {
+    console.error("Google login error:", error);
+  }
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
     const toastId = toast.loading("Signing you in...");
 
@@ -87,12 +102,6 @@ export default function LoginForm() {
       })) as LoginResponse;
 
       if (res.success) {
-        toast.success("Login successful", {
-          id: toastId,
-          description: "Welcome back to bato.ai",
-          duration: 2500,
-        });
-
         // IMPORTANT: set cookies on localhost so middleware can read them
         await fetch("/api/session/set", {
           method: "POST",
@@ -107,6 +116,22 @@ export default function LoginForm() {
         await refresh();
 
         const userRole = res.data?.user?.role || res.data?.role;
+        const userName = res.data?.user?.name || "User";
+
+        // Show role-specific success toast
+        if (userRole === "admin" || userRole === "ADMIN") {
+          toast.success("Admin login successful", {
+            id: toastId,
+            description: "Welcome to the Admin Dashboard",
+            duration: 2500,
+          });
+        } else {
+          toast.success("Login successful", {
+            id: toastId,
+            description: `Welcome back, ${userName}!`,
+            duration: 2500,
+          });
+        }
 
         setTimeout(() => {
           if (userRole === "admin" || userRole === "ADMIN") {
@@ -231,7 +256,11 @@ export default function LoginForm() {
                 <span className="flex-1 h-px bg-border" />
               </div>
 
-              <Button className="w-full h-10 bg-grey text-foreground flex items-center justify-center gap-3 hover:bg-grey/80 font-medium mt-4 border border-border">
+              <Button 
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full h-10 bg-grey text-foreground flex items-center justify-center gap-3 hover:bg-grey/80 font-medium mt-4 border border-border"
+              >
                 <FcGoogle size={18} /> Google
               </Button>
 
