@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "./features/auth/hooks/useAuth";
-import { Toaster } from "sonner"; // ✅ SONNER
+import { Toaster } from "sonner"; // 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +39,7 @@ export default function RootLayout({
           >
             {children}
 
-            {/* ✅ SONNER TOASTER */}
+            {/* SONNER TOASTER */}
             <Toaster
             position="top-right"
             richColors

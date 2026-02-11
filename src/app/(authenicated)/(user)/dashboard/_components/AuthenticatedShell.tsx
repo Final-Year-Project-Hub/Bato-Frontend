@@ -58,7 +58,7 @@ export default function AuthenticatedShell({
           collapsed ? "lg:pl-16" : "lg:pl-72"
         }`}
       >
-        {/* ✅ Always render the actual route */}
+        {/*  Always render the actual route */}
         {children}
       </main>
     </div>

@@ -53,7 +53,6 @@ export function middleware(req: NextRequest) {
   const isLogin = pathname === "/login";
   const isSignup = pathname.startsWith("/signup");
 
-  // ✅ Block /login and /signup if already authed
   if ((isLogin || isSignup) && token) {
     // if token exists but can't be decoded, still let them login
     // (prevents lockout on bad/expired tokens)
@@ -71,7 +70,7 @@ export function middleware(req: NextRequest) {
 
   if (!isProtected) return NextResponse.next();
 
-  // ✅ allow chat bootstrap hit (tokens in URL)
+  //  allow chat bootstrap hit (tokens in URL)
   if (
     isChat &&
     searchParams.get("accessToken") &&

@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ModuleContent from "./ModuleContent";
-import type { RoadmapResponse } from "../types";
+import { useRoadmapNavigation } from "./RoadmapNavigationContext";
 
 export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
   const router = useRouter();
+  
+  // Get roadmapData from the context provided by ProgressShell
+  const { roadmapData } = useRoadmapNavigation();
 
-  const [roadmapData, setRoadmapData] = useState<RoadmapResponse | null>(null);
-
-  const [selectedModule, setSelectedModule] = useState<string | null>(null); // null = show all
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<string | null>(null);
 
   const showAllModules = selectedModule === null;
@@ -38,13 +39,19 @@ export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
     );
   };
 
-  if (!roadmapData) return null; // replace with your loader
+  // Show loading state while data is being fetched
+  if (!roadmapData) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-white text-lg">Loading roadmap data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col">
-      
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto bg-red-500">
+        <div className="flex-1 overflow-y-auto">
           {/* Top bar */}
           <div className="sticky top-0 z-20 bg-background border-b border-white/10">
             {showAllModules ? (
@@ -54,7 +61,7 @@ export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
             ) : (
               <div className="p-4">
                 <button
-                  className="text-sm px-3 py-2 rounded border border-white/20"
+                  className="text-sm px-3 py-2 rounded border border-white/20 text-white hover:bg-white/10"
                   onClick={handleBackToAll}
                 >
                   ← All Modules
@@ -76,7 +83,9 @@ export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
             ))
           ) : (
             (() => {
-              const idx = roadmapData.phases.findIndex((m) => m.id === selectedModule);
+              const idx = roadmapData.phases.findIndex(
+                (m) => m.id === selectedModule
+              );
               const module = roadmapData.phases[idx];
 
               if (!module) return null;
@@ -87,7 +96,9 @@ export default function ProgressPage({ roadmapId }: { roadmapId: string }) {
                   module={module}
                   moduleIndex={idx}
                   selectedLessonId={selectedLesson}
-                  onViewLesson={(topicId) => handleViewLesson(module.id, topicId)}
+                  onViewLesson={(topicId) =>
+                    handleViewLesson(module.id, topicId)
+                  }
                 />
               );
             })()

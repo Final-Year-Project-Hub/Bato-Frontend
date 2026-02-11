@@ -3,6 +3,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Module, RoadmapPhase } from "../types";
+import { useProgress } from "./ProgressContext";
+import { CheckCircle2 } from "lucide-react";
 
 interface ModuleContentProps {
   module: RoadmapPhase;
@@ -37,6 +39,8 @@ export default function ModuleContent({
   selectedLessonId,
   onViewLesson,
 }: ModuleContentProps) {
+  const { progress, isTopicCompleted, isPhaseCompleted } = useProgress();
+
   return (
     <div className="p-8">
       <div className="flex items-center gap-3 mb-6">
@@ -51,8 +55,10 @@ export default function ModuleContent({
         {/* )} */}
         <h2 className="text-2xl font-semibold text-white">{module.title}</h2>
       </div>
-        <div className="space-y-3">
+      <div className="space-y-3">
         {module.topics.map((lesson, index) => {
+          const lessonCompleted = isTopicCompleted(lesson.id);
+
           const isSelected = selectedLessonId === lesson.id;
 
           return (
@@ -68,22 +74,27 @@ export default function ModuleContent({
                 <div className="flex items-center gap-4 flex-1">
                   {/* <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                      lesson.completed
+                      lessonCompleted
                         ? "bg-green-500/20"
                         : isSelected
                         ? "bg-primary/20"
                         : "bg-muted"
                     }`}
-                  > */}
+                  >
+                    </div> */}
 
                   <div
                     className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                      isSelected ? "bg-[#EC5D44]/20" : "bg-white/5"
+                      lessonCompleted
+                        ? "bg-green-500/20"
+                        : isSelected
+                        ? "bg-primary/20"
+                        : "bg-muted"
                     }`}
                   >
-                    {/* {lesson.completed ? (
+                    {lessonCompleted ? (
                       <CheckCircle2 size={20} className="text-green-500" />
-                    ) : ( */}
+                    ) : (
                     <span
                       className={`text-sm font-semibold ${
                         isSelected ? "text-primary" : "text-muted-foreground"
@@ -91,7 +102,7 @@ export default function ModuleContent({
                     >
                       {toRoman(index + 1)}
                     </span>
-                    {/* )} */}
+                   )} 
                   </div>
                   <div className="flex-1">
                     <h3
@@ -119,7 +130,6 @@ export default function ModuleContent({
                 </Button>
               </div>
             </Card>
-        
           );
         })}
       </div>

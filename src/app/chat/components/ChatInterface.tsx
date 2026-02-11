@@ -172,7 +172,7 @@ export default function ChatInterface({
       lines.push([intent, prof].filter(Boolean).join("  |  "));
     if (lines.length) lines.push("");
 
-    // ✅ streaming-friendly: list phases detected so far
+    //  streaming-friendly: list phases detected so far
     // we detect using phase_number (NOT title format)
     const phaseRe =
       /"phase_number"\s*:\s*(\d+)[\s\S]*?"title"\s*:\s*"([^"]+)"/g;
@@ -299,7 +299,7 @@ export default function ChatInterface({
     }
     if (lines.length) lines.push("");
 
-    // ✅ ONLY THIS BLOCK FOR PHASES
+    //  ONLY THIS BLOCK FOR PHASES
     // --- PHASES (realtime) ---
     try {
       // full parse when complete
@@ -310,7 +310,7 @@ export default function ChatInterface({
       const parsed = JSON.parse(jsonText);
 
       if (Array.isArray(parsed?.phases)) {
-        // ✅ full render (final)
+        //  full render (final)
         for (const phase of parsed.phases) {
           lines.push(
             `## Phase ${phase.phase_number}: ${phase.title}${phase.estimated_hours ? ` (${phase.estimated_hours} hrs)` : ""}`,
@@ -333,7 +333,7 @@ export default function ChatInterface({
       // ignore -> fallback below
     }
 
-    // ✅ fallback: partial phases while streaming
+    //  fallback: partial phases while streaming
     const partialPhases = extractCompletePhases(raw);
 
     if (partialPhases.length === 0) {
@@ -359,7 +359,7 @@ export default function ChatInterface({
       }
     }
 
-    // ✅ LIVE: show topics even before phase closes (feels GPT-like)
+    //  LIVE: show topics even before phase closes (feels GPT-like)
     const topicTitleRe =
       /"title"\s*:\s*"([^"]+)"\s*,\s*"description"\s*:\s*"([^"]*)"/g;
 
@@ -520,6 +520,9 @@ export default function ChatInterface({
       let assistantText = "";
       let rawStreamText = "";
 
+      let finalError: string | null = null;
+      let gotAnyOutput = false;
+
       await startStream({
         message: text,
         chatSessionId: currentChatId,
@@ -541,6 +544,7 @@ export default function ChatInterface({
 
         onStatus: (s) => {
           if (!hasAnyTokenRef.current) {
+            gotAnyOutput = true;
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === thinkingId ? { ...m, content: `${s}` } : m,
@@ -550,6 +554,8 @@ export default function ChatInterface({
         },
 
         onToken: (t) => {
+          gotAnyOutput = true;
+
           hasAnyTokenRef.current = true;
 
           rawStreamText += t;
@@ -585,6 +591,8 @@ export default function ChatInterface({
         },
 
         onError: (err) => {
+          gotAnyOutput = true;
+
           setMessages((prev) =>
             prev.map((m) => (m.id === thinkingId ? { ...m, content: err } : m)),
           );
@@ -607,7 +615,7 @@ export default function ChatInterface({
         if (isNewChat) {
           window.history.replaceState(null, "", `/chat/${currentChatId}`);
         }
-      } else {
+      } else if (!gotAnyOutput) {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === thinkingId
@@ -847,7 +855,9 @@ function ChatBubble({
         {goal && (
           <div className="bg-primary/10 p-4 rounded-lg border-l-4 border-primary">
             <h2 className="text-xl font-bold text-foreground mb-2">{goal}</h2>
-            {metadata && <p className="text-sm text-muted-foreground">{metadata}</p>}
+            {metadata && (
+              <p className="text-sm text-muted-foreground">{metadata}</p>
+            )}
           </div>
         )}
 
@@ -932,7 +942,10 @@ function ChatBubble({
         );
       } else if (line.startsWith("## Phase")) {
         return (
-          <div key={idx} className="text-base font-bold mt-4 mb-2 text-foreground">
+          <div
+            key={idx}
+            className="text-base font-bold mt-4 mb-2 text-foreground"
+          >
             {line.replace("## ", "")}
           </div>
         );

@@ -6,6 +6,8 @@ import { useRoadmapNavigation } from "./RoadmapNavigationContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import TopicCompletionDialog from "./TopicCompleteDialog";
+import { useProgress } from "./ProgressContext";
+import QuizModal from "./QuizModal";
 
 interface TopicNavigationButtonsProps {
   currentPhaseId: string;
@@ -19,8 +21,12 @@ export default function TopicNavigationButtons({
   currentTopicTitle,
 }: TopicNavigationButtonsProps) {
   const router = useRouter();
-  const { roadmapData, roadmapId, getTopicNavigation } =
-    useRoadmapNavigation();
+  const { roadmapData, roadmapId, getTopicNavigation } = useRoadmapNavigation();
+  const { progress, isTopicCompleted, isPhaseCompleted } = useProgress();
+  const [openQuiz, setOpenQuiz] = useState(false);
+
+
+  const lessonCompleted = isTopicCompleted(currentTopicId);
 
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<{
@@ -46,6 +52,14 @@ export default function TopicNavigationButtons({
   const handleNextClick = () => {
     if (!navigation.nextTopic) return;
 
+    if (isTopicCompleted(currentTopicId)) {
+      handleNavigate(
+        navigation.nextTopic.phaseId,
+        navigation.nextTopic.topicId,
+      );
+      return;
+    }
+
     // Store the navigation destination
     setPendingNavigation({
       phaseId: navigation.nextTopic.phaseId,
@@ -56,16 +70,20 @@ export default function TopicNavigationButtons({
     setShowCompletionDialog(true);
   };
 
-  const handleConfirmCompletion = (wasMarkedComplete: boolean) => {
-    setShowCompletionDialog(false);
+const handleConfirmCompletion = (action: "skip" | "take_quiz") => {
+  setShowCompletionDialog(false);
 
-    // Navigate regardless of whether they marked it complete
-    if (pendingNavigation) {
-      handleNavigate(pendingNavigation.phaseId, pendingNavigation.topicId);
-    }
+  if (action === "take_quiz") {
+    setOpenQuiz(true); 
+    return;            
+  }
 
-    setPendingNavigation(null);
-  };
+  // skip -> navigate
+  if (pendingNavigation) {
+    handleNavigate(pendingNavigation.phaseId, pendingNavigation.topicId);
+  }
+  setPendingNavigation(null);
+};
 
   const handlePreviousClick = () => {
     if (!navigation.previousTopic) return;
@@ -111,10 +129,7 @@ export default function TopicNavigationButtons({
 
         {/* Next Button */}
         {navigation.nextTopic ? (
-          <Button
-            onClick={handleNextClick}
-            className="flex items-center gap-2"
-          >
+          <Button onClick={handleNextClick} className="flex items-center gap-2">
             <div className="text-right">
               <div className="">Next</div>
               {/* <div className="text-sm font-medium line-clamp-1">
@@ -149,6 +164,23 @@ export default function TopicNavigationButtons({
         nextTopicTitle={navigation.nextTopic?.topicTitle}
         onConfirm={handleConfirmCompletion}
       />
+      <QuizModal
+  isOpen={openQuiz}
+  onClose={() => {
+    setOpenQuiz(false);
+
+    // after quiz closes -> navigate next
+    if (pendingNavigation) {
+      handleNavigate(pendingNavigation.phaseId, pendingNavigation.topicId);
+      setPendingNavigation(null);
+    }
+  }}
+  roadmapId={roadmapId}
+  phaseId={currentPhaseId}
+  topicId={currentTopicId}
+  topicTitle={currentTopicTitle}
+/>
+
     </>
   );
 }

@@ -310,7 +310,7 @@ export default function QuizModal({
             <span>
               Progress:{" "}
               {Math.round(
-                ((currentQuestionIndex + 1) / quizData.questions.length) * 100,
+                ((currentQuestionIndex + 0) / quizData.questions.length) * 100,
               )}
               %
             </span>

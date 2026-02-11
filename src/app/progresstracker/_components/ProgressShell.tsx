@@ -31,7 +31,7 @@ export default function ProgressShell({
 
   useEffect(() => {
     console.log("🔍 Progress useEffect triggered with roadmapId:", roadmapId);
-    
+
     if (!roadmapId) {
       console.log("No roadmapId, skipping progress fetch");
       return;
@@ -60,7 +60,7 @@ export default function ProgressShell({
 
         const json = await res.json();
         console.log("✅ progress tracker", json);
-        
+
         if (!cancelled) {
           setProgressData(json);
           console.log("💾 progress data stored", json);
@@ -179,7 +179,9 @@ export default function ProgressShell({
           />
 
           {/* THIS is where each page renders */}
-          <div className="flex-1 overflow-y-auto">{children}</div>
+          <div className="flex-1 overflow-y-auto">
+            {children}
+          </div>
         </div>
       </div>
     </RoadmapNavigationProvider>
