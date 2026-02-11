@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   return res;
 }
 
-// ✅ Google login redirect can hit this
+//  Google login redirect can hit this
 export function GET(req: NextRequest) {
   const url = new URL(req.url);
   const accessToken = url.searchParams.get("accessToken");

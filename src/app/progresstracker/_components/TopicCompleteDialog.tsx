@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, CheckCircle2, Loader2 } from "lucide-react";
+import { Check, CheckCircle2, Loader2, Trophy } from "lucide-react";
 
 interface TopicCompletionDialogProps {
   open: boolean;
@@ -19,7 +19,7 @@ interface TopicCompletionDialogProps {
   currentTopicId: string;
   currentTopicTitle: string;
   nextTopicTitle?: string;
-  onConfirm: (markAsCompleted: boolean) => void;
+  onConfirm: (action: "skip" | "take_quiz") => void;
 }
 
 const baseUrl =
@@ -36,60 +36,58 @@ export default function TopicCompletionDialog({
 }: TopicCompletionDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleMarkComplete = async () => {
-    setIsSubmitting(true);
-    try {
-      const roadmapId = window.location.pathname.split("/")[2]; // Extract from URL
-      
-      const response = await fetch(
-        `${baseUrl}/api/roadmap/${roadmapId}/progress/complete-topic`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            phaseId: currentPhaseId,
-            topicId: currentTopicId,
-          }),
-        }
-      );
+  // const handleMarkComplete = async () => {
+  //   setIsSubmitting(true);
+  //   try {
+  //     const roadmapId = window.location.pathname.split("/")[2]; // Extract from URL
 
-      if (!response.ok) {
-        throw new Error("Failed to mark topic as completed");
-      }
+  //     const response = await fetch(
+  //       `${baseUrl}/api/roadmap/${roadmapId}/progress/complete-topic`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         credentials: "include",
+  //         body: JSON.stringify({
+  //           phaseId: currentPhaseId,
+  //           topicId: currentTopicId,
+  //         }),
+  //       },
+  //     );
 
-      console.log("✅ Topic marked as completed");
-      onConfirm(true);
-    } catch (error) {
-      console.error(" Error marking topic as completed:", error);
-      // Still navigate even if API fails
-      onConfirm(true);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  //     if (!response.ok) {
+  //       throw new Error("Failed to mark topic as completed");
+  //     }
 
-  const handleSkip = () => {
-    onConfirm(false);
-  };
+  //     console.log(" Topic marked as completed");
+  //     onConfirm(true);
+  //   } catch (error) {
+  //     console.error(" Error marking topic as completed:", error);
+  //     // Still navigate even if API fails
+  //     onConfirm(true);
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+  const handleTakeQuiz = () => onConfirm("take_quiz");
+
+  const handleSkip = () => onConfirm("skip");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CheckCircle2 className="h-6 w-6 text-white" />
-            Mark as Completed?
+            <Trophy className="h-6 w-6 text-white" />
+            Take A Quiz?
           </DialogTitle>
           <DialogDescription className="space-y-2 pt-2">
-              Did you complete{" "}
-              <br />
-              <span className="font-medium text-foreground">
-                "{currentTopicTitle}"
-              </span>
-              ?
+            Do you want to take a quiz to test your understanding of <br />
+            <span className="font-medium text-foreground">
+              "{currentTopicTitle}"
+            </span>
+            ?
             {/* {nextTopicTitle && (
               <span className="text-sm text-muted-foreground">
                 <br /> <br />
@@ -109,7 +107,7 @@ export default function TopicCompletionDialog({
             No, Skip
           </Button>
           <Button
-            onClick={handleMarkComplete}
+            onClick={handleTakeQuiz}
             disabled={isSubmitting}
             className="w-full sm:w-auto"
           >
@@ -121,7 +119,7 @@ export default function TopicCompletionDialog({
             ) : (
               <>
                 <Check className="mr-1 h-4 w-4" />
-                Yes, Mark Complete
+                Yes, Take Quiz
               </>
             )}
           </Button>
