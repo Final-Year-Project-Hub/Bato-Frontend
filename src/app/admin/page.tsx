@@ -73,7 +73,7 @@ export default function AdminDashboard() {
           totalRoadmaps: totalRoadmaps,
           revenue: 12450, // TODO: Add revenue API
           llmCosts: 3200, // TODO: Add LLM costs API
-          totalDocuments: 5, // TODO: Add documents API
+          totalDocuments: 3, // TODO: Add documents API
           quizzesAttempted: quizCount,
         });
       } catch (error) {
