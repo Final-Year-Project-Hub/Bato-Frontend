@@ -291,19 +291,18 @@ export default function ProfileSettings() {
       }
 
       const data: UpdateProfileImageResponse = await res.json();
-      console.log("✅ Upload successful!");
-      console.log("📦 Response data:", data);
+      console.log(" Response data:", data);
 
       // Extract image URL
       const imageUrl = data.updatedUser?.image || data.image;
       
       if (!imageUrl) {
-        console.error("❌ No image URL in response");
+        console.error("No image URL in response");
         toast.error("Upload failed: No image URL returned", { id: toastId });
         return;
       }
 
-      console.log("🖼️ New image URL:", imageUrl);
+      console.log(" New image URL:", imageUrl);
 
       // Update local preview immediately
       setAvatarPreview(imageUrl);
@@ -311,11 +310,11 @@ export default function ProfileSettings() {
       toast.success("Profile picture updated successfully", { id: toastId });
 
       // Refresh user data from backend to sync everything
-      console.log("🔄 Refreshing user data...");
+      console.log(" Refreshing user data...");
       await refresh();
-      console.log("✅ User data refreshed");
+      console.log("User data refreshed");
     } catch (err) {
-      console.error("❌ Upload error:", err);
+      console.error(" Upload error:", err);
       
       if (err instanceof TypeError && err.message.includes("fetch")) {
         toast.error("Network error: Cannot reach server", { id: toastId });

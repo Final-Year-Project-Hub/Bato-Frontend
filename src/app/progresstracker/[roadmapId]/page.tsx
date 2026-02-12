@@ -6,11 +6,7 @@ export default async function ProgresssPage({
   params: Promise<{ roadmapId: string }>;
 }) {
   const { roadmapId } = await params;
-  return (
-    <main className="">
-      <div className="">
-        <ProgressPage roadmapId={roadmapId} />
-      </div>
-    </main>
-  );
+  
+  // ProgressShell already provides the layout, just render ProgressPage
+  return <ProgressPage roadmapId={roadmapId} />;
 }

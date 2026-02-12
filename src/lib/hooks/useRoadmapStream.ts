@@ -62,7 +62,7 @@ export function useRoadmapStream() {
 
         let buffer = "";
 
-        // ✅ same helper style as your working roadmapService
+        // same helper style as your working roadmapService
         const extractJsonObjects = (input: string): string[] => {
           const objects: string[] = [];
           let depth = 0;
@@ -142,13 +142,13 @@ export function useRoadmapStream() {
           const { value, done } = await reader.read();
           if (done) break;
 
-          // ✅ normalize CRLF like the other fix
+          // normalize CRLF like the other fix
           const chunk = decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
           args.onRawChunk?.(chunk);
 
           buffer += chunk;
 
-          // ✅ parse line-by-line like your working roadmapService
+          // parse line-by-line like your working roadmapService
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
 
@@ -164,7 +164,7 @@ export function useRoadmapStream() {
           }
         }
 
-        // ✅ final buffer flush (same style)
+        // final buffer flush (same style)
         const tail = buffer.trim();
         if (tail && tail.startsWith("data:")) {
           const jsonStr = tail.replace(/^data:\s?/, "");
