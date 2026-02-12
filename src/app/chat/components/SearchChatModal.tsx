@@ -6,6 +6,7 @@ import { Search, X, SquarePen, MessageCircle } from "lucide-react";
 interface SearchChatModalProps {
   open: boolean;
   chats: string[];
+  chatIds: string[];
   onClose: () => void;
   onSelectChat: (chat: string) => void;
   onNewChat: () => void;
@@ -14,6 +15,7 @@ interface SearchChatModalProps {
 export default function SearchChatModal({
   open,
   chats,
+  chatIds,
   onClose,
   onSelectChat,
   onNewChat,
@@ -39,11 +41,8 @@ export default function SearchChatModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      {/* 🔲 Modal */}
       <div className="w-full max-w-xl h-[60vh] rounded-2xl bg-[#1E1E1E] shadow-xl flex flex-col">
-        {/* 🔍 Search +  Close Row */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          {/* 🔍 Search */}
           <div className="flex flex-1 items-center gap-2 rounded-full bg-[#2A2A2A] px-4 py-2">
             <Search size={16} className="text-white/50" />
             <input
@@ -55,7 +54,6 @@ export default function SearchChatModal({
             />
           </div>
 
-          {/* ❌ Close */}
           <button
             onClick={handleClose}
             className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
@@ -64,7 +62,6 @@ export default function SearchChatModal({
           </button>
         </div>
 
-        {/* ➕ New Chat */}
         <button
           onClick={handleNewChat}
           className="mx-2 mb-2 flex items-center gap-2 rounded-md px-3 py-2 text-sm text-white/80 hover:bg-white/10"
@@ -73,15 +70,14 @@ export default function SearchChatModal({
           New chat
         </button>
 
-        {/* 📜 Results */}
         <div className="flex-1 overflow-y-auto px-2">
           {filteredChats.length === 0 && (
             <p className="px-3 py-2 text-sm text-white/50">No chats found</p>
           )}
 
-          {filteredChats.map((chat) => (
+          {filteredChats.map((chat, index) => (
             <button
-              key={chat}
+              key={chatIds[index]}
               onClick={() => {
                 setQuery("");
                 onSelectChat(chat);
