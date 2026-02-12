@@ -1,14 +1,16 @@
 "use client";
 
 import { Mail, Calendar } from "lucide-react";
+import Image from "next/image";
 
 export type User = {
-  id: number;
+  id: string; // number → string (API le string ID dincha)
   name: string;
   email: string;
   roadmaps: number;
   joined: string;
   status: "Verified" | "Not Verified";
+  image?: string | null; // Add avatar support
 };
 
 export default function UsersTable({ users }: { users: User[] }) {
@@ -42,13 +44,23 @@ export default function UsersTable({ users }: { users: User[] }) {
                 key={user.id}
                 className="border-b border-border hover:bg-grey/50 transition-colors"
               >
-                {/* User */}
+                {/* User - with Image Support */}
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <span className="text-primary font-semibold">
-                        {user.name[0]}
-                      </span>
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                      {user.image ? (
+                        <Image
+                          src={user.image}
+                          alt={user.name}
+                          width={40}
+                          height={40}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <span className="text-primary font-semibold">
+                          {user.name?.[0]?.toUpperCase() || "?"}
+                        </span>
+                      )}
                     </div>
                     <span className="font-medium text-foreground">
                       {user.name}

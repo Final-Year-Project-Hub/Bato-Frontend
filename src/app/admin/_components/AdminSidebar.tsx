@@ -14,8 +14,11 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import LogoutModal from "../../chat/components/LogoutModal";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/app/features/auth/hooks/useAuth";
 
 const menuItems = [
   { label: "Overview", icon: LayoutDashboard, href: "/admin" },
@@ -35,6 +38,37 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const auth = useAuth();
+
+  const handleLogout = async () => {
+    // Show loading toast
+    toast.loading("Logging out...");
+
+    try {
+      // Backend logout
+      await apiFetch("/auth/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Backend logout failed (continuing):", e);
+    }
+
+    try {
+      // Clear localhost cookies used by middleware
+      await fetch("/api/session/clear", { method: "POST" });
+    } catch (e) {
+      console.error("Local cookie clear failed:", e);
+    }
+
+    // Update auth UI state
+    await auth.refresh();
+
+    // Dismiss loading toast and show success
+    toast.dismiss();
+    toast.success("Logged out successfully");
+
+    // Hard redirect so no cached protected UI remains
+    router.replace("/login");
+    router.refresh();
+  };
 
   return (
     <>
@@ -114,10 +148,9 @@ export default function AdminSidebar({
       <LogoutModal
         open={logoutOpen}
         onClose={() => setLogoutOpen(false)}
-        onConfirm={() => {
-          // clear auth here later (token / cookie)
+        onConfirm={async () => {
           setLogoutOpen(false);
-          router.push("/login");
+          await handleLogout();
         }}
       />
     </>

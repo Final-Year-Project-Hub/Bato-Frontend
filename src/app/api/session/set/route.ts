@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     sameSite: "lax",
     secure: false, // localhost
     path: "/",
+    maxAge: 60 * 60 * 24, // ← 24 hours (86400 seconds)
   });
 
   if (refreshToken) {
@@ -26,7 +27,8 @@ export async function POST(req: Request) {
       sameSite: "lax",
       secure: false,
       path: "/",
-    });
+      maxAge: 60 * 60 * 24  
+    })
   }
 
   return res;
@@ -50,6 +52,7 @@ export function GET(req: NextRequest) {
     sameSite: "lax",
     secure: false, // localhost
     path: "/",
+    maxAge: 60 * 60 * 24, // ← 24 hours
   });
 
   if (refreshToken) {
@@ -58,6 +61,7 @@ export function GET(req: NextRequest) {
       sameSite: "lax",
       secure: false,
       path: "/",
+      maxAge: 60 * 60 * 24 ,
     });
   }
 
