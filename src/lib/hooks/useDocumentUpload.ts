@@ -18,6 +18,11 @@ export function useDocumentUpload() {
     cleanWhitespace: boolean;
     targetTokensPerChunk: number;
     maxTokensPerChunk: number;
+    recreateCollection: boolean;
+    // ✅ Missing backend fields
+    pathPrefix?: string;
+    stripNumPrefix: boolean;
+    replaceExts: boolean;
     file: File;
   }) => {
     console.log("useDocumentUpload hook called");
@@ -25,32 +30,41 @@ export function useDocumentUpload() {
 
     try {
       const data = new FormData();
-      
+
       console.log("Creating FormData...");
-      
+
       // Map your form fields to backend expected fields
       data.append("frameworkKey", formData.frameworkKey.toLowerCase());
       data.append("frameworkName", formData.frameworkName);
       data.append("version", formData.version);
       data.append("baseUrl", formData.officialDocsUrl);
       data.append("extensions", formData.fileExtensions);
-      
+
       if (formData.subdirectory) {
         data.append("subdirectory", formData.subdirectory);
       }
-      
+
       if (formData.removePatterns) {
         data.append("removePatterns", formData.removePatterns);
       }
-      
+
       data.append("cleanWhitespace", String(formData.cleanWhitespace));
       data.append("targetTokens", String(formData.targetTokensPerChunk));
       data.append("maxTokens", String(formData.maxTokensPerChunk));
       data.append("file", formData.file);
 
-      // Optional backend fields
+      // ✅ collectionName derived from frameworkKey
       data.append("collectionName", formData.frameworkKey.toLowerCase());
-      data.append("recreateCollection", "false");
+
+      // ✅ Now driven by user input instead of hardcoded "false"
+      data.append("recreateCollection", String(formData.recreateCollection));
+
+      // ✅ Missing backend fields
+      if (formData.pathPrefix) {
+        data.append("pathPrefix", formData.pathPrefix);
+      }
+      data.append("stripNumPrefix", String(formData.stripNumPrefix));
+      data.append("replaceExts", String(formData.replaceExts));
 
       console.log("Sending API request to /api/admin/documents/upload");
       console.log("File details:", {
@@ -58,6 +72,7 @@ export function useDocumentUpload() {
         size: formData.file.size,
         type: formData.file.type,
       });
+      console.log("recreateCollection:", formData.recreateCollection);
 
       const response = await apiFetch("/api/admin/documents/upload", {
         method: "POST",

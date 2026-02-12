@@ -54,7 +54,7 @@ export default function AuthenticatedShell({
 
       {/* PAGE CONTENT */}
       <main
-        className={`min-h-screen w-full bg-grey transition-all duration-300 lg:pt-20 ${
+        className={`min-h-screen w-full bg-background transition-all duration-300 lg:pt-20 ${
           collapsed ? "lg:pl-16" : "lg:pl-72"
         }`}
       >
