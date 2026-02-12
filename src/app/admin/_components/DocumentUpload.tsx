@@ -41,6 +41,11 @@ const frameworkSchema = z.object({
   cleanWhitespace: z.boolean(),
   targetTokensPerChunk: z.number().min(100, "Minimum 100 tokens"),
   maxTokensPerChunk: z.number().min(100, "Minimum 100 tokens"),
+  recreateCollection: z.boolean(),
+  // ✅ Missing backend fields
+  pathPrefix: z.string().optional(),
+  stripNumPrefix: z.boolean(),
+  replaceExts: z.boolean(),
 });
 
 type FrameworkFormValues = z.infer<typeof frameworkSchema>;
@@ -65,6 +70,11 @@ export default function DocumentUpload() {
       cleanWhitespace: true,
       targetTokensPerChunk: 800,
       maxTokensPerChunk: 4000,
+      recreateCollection: false,
+      // ✅ Missing backend fields
+      pathPrefix: "",
+      stripNumPrefix: false,
+      replaceExts: false,
     },
   });
 
@@ -328,7 +338,7 @@ export default function DocumentUpload() {
                           <Textarea
                             {...field}
                             placeholder="^---[\s\S]*?---$"
-                            className="bg-grey border-border min-h-[100px]"
+                            className="bg-grey border-border min-h-25"
                           />
                         </FormControl>
                         <FormDescription className="text-xs">
@@ -352,12 +362,115 @@ export default function DocumentUpload() {
                             className="w-4 h-4 accent-primary"
                           />
                         </FormControl>
-                        <FormLabel className="!mt-0 cursor-pointer">
+                        <FormLabel className="mt-0! cursor-pointer">
                           Clean excessive whitespace
                         </FormLabel>
                       </FormItem>
                     )}
                   />
+
+                  {/* ✅ NEW: Overwrite existing collection */}
+                  <FormField
+                    control={form.control}
+                    name="recreateCollection"
+                    render={({ field }) => (
+                      <FormItem className="flex items-start gap-3 rounded-lg border border-border p-3 bg-grey">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={field.onChange}
+                            className="w-4 h-4 accent-primary mt-0.5"
+                          />
+                        </FormControl>
+                        <div className="space-y-1">
+                          <FormLabel className="mt-0! cursor-pointer font-medium">
+                            Overwrite existing collection
+                          </FormLabel>
+                          <FormDescription className="text-xs">
+                            If a collection with this framework key already exists,
+                            delete and recreate it. Leave unchecked to prevent
+                            accidental overwrites.
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* ✅ Path Prefix */}
+                  <FormField
+                    control={form.control}
+                    name="pathPrefix"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Path Prefix (optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="docs/"
+                            className="bg-grey border-border"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          Strip this prefix from file paths when processing
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* ✅ stripNumPrefix & replaceExts */}
+                  <div className="space-y-3">
+                    <FormField
+                      control={form.control}
+                      name="stripNumPrefix"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="w-4 h-4 accent-primary"
+                            />
+                          </FormControl>
+                          <div>
+                            <FormLabel className="mt-0! cursor-pointer">
+                              Strip numeric prefix from filenames
+                            </FormLabel>
+                            <FormDescription className="text-xs">
+                              e.g. <code>01-intro.md</code> → <code>intro.md</code>
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="replaceExts"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="w-4 h-4 accent-primary"
+                            />
+                          </FormControl>
+                          <div>
+                            <FormLabel className="mt-0! cursor-pointer">
+                              Replace file extensions
+                            </FormLabel>
+                            <FormDescription className="text-xs">
+                              Normalize extensions during processing (e.g. <code>.mdx</code> → <code>.md</code>)
+                            </FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -372,7 +485,9 @@ export default function DocumentUpload() {
                               type="number"
                               placeholder="800"
                               className="bg-grey border-border"
-                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -392,7 +507,9 @@ export default function DocumentUpload() {
                               type="number"
                               placeholder="4000"
                               className="bg-grey border-border"
-                              onChange={(e) => field.onChange(Number(e.target.value))}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
                             />
                           </FormControl>
                           <FormMessage />

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  MoveUp,
   BadgeCheck,
   AudioWaveform,
   Code2,
@@ -13,6 +12,7 @@ import {
   Cloud,
   Lock,
   LineChart,
+  BookOpen,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -20,39 +20,32 @@ import Link from "next/link";
 import { RoadmapCard } from "./my-roadmaps/_components/RoadmapCard";
 import Activity, { ActivityItem } from "./_components/Activity";
 import { useRoadmaps } from "@/lib/hooks/useRoadmaps";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/app/features/auth/hooks/useAuth";
 
 type Stat = {
   id: string;
   label: string;
   value: string | number;
-  delta: string;
   Icon: React.ElementType;
   iconWrapClass: string;
   iconClass: string;
 };
 
-// Helper function to get icon based on roadmap title
 const getIconForTitle = (title: string): LucideIcon => {
   const lowerTitle = title.toLowerCase();
-
   if (lowerTitle.includes("react")) return Code2;
-  if (lowerTitle.includes("node") || lowerTitle.includes("backend"))
-    return Database;
+  if (lowerTitle.includes("node") || lowerTitle.includes("backend")) return Database;
   if (lowerTitle.includes("python") || lowerTitle.includes("ai")) return Brain;
   if (lowerTitle.includes("mobile")) return Smartphone;
-  if (lowerTitle.includes("full stack") || lowerTitle.includes("web"))
-    return Globe;
-  if (lowerTitle.includes("machine learning") || lowerTitle.includes("ml"))
-    return Cpu;
+  if (lowerTitle.includes("full stack") || lowerTitle.includes("web")) return Globe;
+  if (lowerTitle.includes("machine learning") || lowerTitle.includes("ml")) return Cpu;
   if (lowerTitle.includes("cloud")) return Cloud;
-  if (lowerTitle.includes("security") || lowerTitle.includes("cyber"))
-    return Lock;
+  if (lowerTitle.includes("security") || lowerTitle.includes("cyber")) return Lock;
   if (lowerTitle.includes("data")) return LineChart;
-
-  return Code2; // Default
+  return Code2;
 };
 
-// Color gradients
 const colorGradients = [
   "bg-gradient-to-br from-blue-500 to-blue-600",
   "bg-gradient-to-br from-green-500 to-green-600",
@@ -66,22 +59,15 @@ const colorGradients = [
 ];
 
 function TopBox({ stat }: { stat: Stat }) {
-  const { label, value, delta, Icon, iconWrapClass, iconClass } = stat;
+  const { label, value, Icon, iconWrapClass, iconClass } = stat;
 
   return (
-    <div className="rounded-xl border border-white/25 bg-background/60 p-6 mt-10 flex items-start justify-between">
+    <div className="rounded-xl border border-white/10 bg-background/60 p-6  mt-6 flex items-start justify-between">
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="text-3xl font-semibold text-primary">{value}</p>
-        <div className="flex items-center gap-2 text-sm text-emerald-400">
-          <MoveUp className="h-4 w-4" />
-          <span>{delta}</span>
-        </div>
       </div>
-
-      <div
-        className={`h-10 w-10 rounded-sm grid place-items-center ${iconWrapClass}`}
-      >
+      <div className={`h-10 w-10 rounded-sm grid place-items-center ${iconWrapClass}`}>
         <Icon className={`h-5 w-5 ${iconClass}`} />
       </div>
     </div>
@@ -90,34 +76,59 @@ function TopBox({ stat }: { stat: Stat }) {
 
 export default function Page() {
   const { roadmaps, loading, error } = useRoadmaps();
+  const { user } = useAuth();
+  const [quizAttempts, setQuizAttempts] = useState<number>(0);
+  const [quizLoading, setQuizLoading] = useState(true);
 
-  // Calculate stats based on actual data
+  useEffect(() => {
+    async function fetchQuizAttempts() {
+      if (!user?.id) return;
+
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const response = await fetch(`${baseUrl}/api/quiz/user/${user.id}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setQuizAttempts(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch quiz attempts:", error);
+      } finally {
+        setQuizLoading(false);
+      }
+    }
+
+    fetchQuizAttempts();
+  }, [user?.id]);
+
   const activeRoadmaps = roadmaps?.length || 0;
 
   const STATS: Stat[] = [
     {
       id: "active-roadmaps",
       label: "Active Roadmaps",
-      value: activeRoadmaps,
-      delta: "2% increase",
+      value: loading ? "..." : activeRoadmaps,
       Icon: AudioWaveform,
       iconWrapClass: "bg-blue-100",
       iconClass: "text-blue-600",
     },
     {
-      id: "completed-tasks",
-      label: "Completed Tasks",
-      value: 28,
-      delta: "2% increase",
-      Icon: BadgeCheck,
-      iconWrapClass: "bg-green-100",
-      iconClass: "text-green-600",
+      id: "quiz-attempted",
+      label: "Quizzes Attempted",
+      value: quizLoading ? "..." : quizAttempts,
+      Icon: BookOpen,
+      iconWrapClass: "bg-purple-100",
+      iconClass: "text-purple-600",
     },
   ];
 
   return (
-    <main className="my-container space-y-5 pb-10">
-
+    <main className="my-container py-8 space-y-4">
       {/* STATS */}
       <div className="grid grid-cols-4 gap-5">
         {STATS.map((stat) => (
@@ -125,80 +136,74 @@ export default function Page() {
         ))}
       </div>
 
-      {/* ROADMAP HEADER */}
-      <div className="flex justify-between">
-        <p className="text-primary text-2xl font-semibold">Your Roadmaps</p>
-        <Link
-          href="/dashboard/my-roadmaps"
-          className="text-sm text-secondary font-medium"
-        >
-          View All
-        </Link>
-      </div>
+      {/* ROADMAP HEADER + LIST */}
+      <div className="space-y-4 pt-6">
+        <div className="flex justify-between">
+          <p className="text-primary text-2xl font-semibold">Your Roadmaps</p>
+          <Link
+            href="/dashboard/my-roadmaps"
+            className="text-sm text-secondary font-medium"
+          >
+            View All
+          </Link>
+        </div>
 
-      {/* ROADMAP LIST */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-        {loading && (
-          <p className="text-muted-foreground col-span-full text-center py-8">
-            Loading roadmaps...
-          </p>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+          {loading && (
+            <p className="text-muted-foreground col-span-full text-center">
+              Loading roadmaps...
+            </p>
+          )}
+          {error && (
+            <p className="text-red-500 col-span-full text-center py-8">
+              {error}
+            </p>
+          )}
+          {!loading && !error && roadmaps && roadmaps.length === 0 && (
+            <div className="col-span-full text-center py-12">
+              <p className="text-muted-foreground mb-4">No roadmaps yet</p>
+              <Link
+                href="/chat"
+                className="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+              >
+                Create Your First Roadmap
+              </Link>
+            </div>
+          )}
+          {!loading &&
+            !error &&
+            roadmaps &&
+            roadmaps.slice(0, 4).map((roadmap, index) => {
+              const icon = getIconForTitle(roadmap.title);
+              const color = colorGradients[index % colorGradients.length];
+              const estimatedHours =
+                roadmap.proficiency === "beginner" ? 150
+                : roadmap.proficiency === "intermediate" ? 100
+                : roadmap.proficiency === "advanced" ? 80
+                : 120;
 
-        {error && (
-          <p className="text-red-500 col-span-full text-center py-8">{error}</p>
-        )}
-
-        {!loading && !error && roadmaps && roadmaps.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <p className="text-muted-foreground mb-4">No roadmaps yet</p>
-            <Link
-              href="/chat"
-              className="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
-            >
-              Create Your First Roadmap
-            </Link>
-          </div>
-        )}
-
-        {!loading &&
-          !error &&
-          roadmaps &&
-          roadmaps.slice(0, 4).map((roadmap, index) => {
-            const icon = getIconForTitle(roadmap.title);
-            const color = colorGradients[index % colorGradients.length];
-
-            // Calculate estimated hours based on proficiency
-            const estimatedHours =
-              roadmap.proficiency === "beginner"
-                ? 150
-                : roadmap.proficiency === "intermediate"
-                  ? 100
-                  : roadmap.proficiency === "advanced"
-                    ? 80
-                    : 120;
-
-            return (
-              <RoadmapCard
-                key={roadmap.id}
-                id={roadmap.id}
-                title={roadmap.title}
-                description={roadmap.goal}
-                icon={icon}
-                estimatedHours={estimatedHours}
-                color={color}
-                gradient={color}
-                index={index}
-              />
-            );
-          })}
+              return (
+                <RoadmapCard
+                  key={roadmap.id}
+                  id={roadmap.id}
+                  title={roadmap.title}
+                  description={roadmap.goal}
+                  icon={icon}
+                  estimatedHours={estimatedHours}
+                  color={color}
+                  gradient={color}
+                  index={index}
+                />
+              );
+            })}
+        </div>
       </div>
 
       {/* ACTIVITY */}
-      <div className="rounded-2xl border border-white/25 bg-background/60 p-6">
+      <div className="rounded-2xl border border-white/10 bg-background/60 p-6 mt-10">
         <h2 className="text-xl font-semibold text-primary mb-6">
           Recent Activity
         </h2>
-
         <div className="space-y-6">
           {RECENT_ACTIVITIES.map((item) => (
             <Activity key={item.id} item={item} />

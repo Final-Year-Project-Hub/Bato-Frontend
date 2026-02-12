@@ -83,7 +83,7 @@ export default function SideBar({
   return (
     <aside
       className={clsx(
-        "h-screen bg-background border-r border-white/5 flex flex-col transition-all duration-300 overflow-hidden",
+        "h-screen bg-sidebar border-r border-white/5 flex flex-col transition-all duration-300 overflow-hidden",
         collapsed ? "w-16" : "w-72",
       )}
     >
@@ -140,7 +140,7 @@ export default function SideBar({
           >
             {/* Avatar with image or initial */}
             <Avatar className="h-9 w-9 shrink-0">
-              <AvatarImage src={userImage || ""} alt={displayName} className="object-cover" />
+              <AvatarImage src={userImage || undefined} alt={displayName} className="object-cover" />
               <AvatarFallback className="bg-primary/15 text-primary font-semibold">
                 {initial}
               </AvatarFallback>

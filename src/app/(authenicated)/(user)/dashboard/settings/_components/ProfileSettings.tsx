@@ -102,7 +102,7 @@ export default function ProfileSettings() {
   useEffect(() => {
     if (!user) return;
 
-    console.log("👤 Loading user data:", user);
+    console.log(" Loading user data:", user);
 
     form.reset({
       name: user.name || "",
@@ -111,7 +111,7 @@ export default function ProfileSettings() {
 
     // Set avatar preview from user data
     if (user.image) {
-      console.log("🖼️ Setting avatar from user.image:", user.image);
+      console.log(" Setting avatar from user.image:", user.image);
       setAvatarPreview(user.image);
     } else {
       console.log("⚠️ No image found in user data");
@@ -241,7 +241,7 @@ export default function ProfileSettings() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    console.log("📁 File selected:", file.name, file.type, file.size);
+    console.log(" File selected:", file.name, file.type, file.size);
 
     // Validate file size (2MB)
     if (file.size > 2 * 1024 * 1024) {
@@ -273,17 +273,17 @@ export default function ProfileSettings() {
         body: formData,
       });
 
-      console.log("📥 Response status:", res.status);
+      console.log(" Response status:", res.status);
 
       if (!res.ok) {
         let errorMessage;
         try {
           const errorData = await res.json();
-          console.error("❌ Error response:", errorData);
+          console.error(" Error response:", errorData);
           errorMessage = errorData.message || errorData.error || `Upload failed: ${res.status}`;
         } catch {
           const errorText = await res.text();
-          console.error("❌ Error response (text):", errorText);
+          console.error(" Error response (text):", errorText);
           errorMessage = `Upload failed: ${res.status}`;
         }
         toast.error(errorMessage, { id: toastId });

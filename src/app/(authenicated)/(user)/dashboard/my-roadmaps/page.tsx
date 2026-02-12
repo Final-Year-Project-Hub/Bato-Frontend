@@ -39,7 +39,7 @@ export default function RoadmapsPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-card text-secondary px-6 py-3 rounded-full text-sm font-semibold mb-6 border border-secondary/20 shadow-sm"
+            className="inline-flex items-center gap-2  text-secondary px-6 py-3 rounded-full text-sm font-semibold mb-6 border border-secondary/20 shadow-sm"
           >
             <Sparkles className="w-4 h-4" />
             Start Your Journey
@@ -52,8 +52,8 @@ export default function RoadmapsPage() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-wrap items-center justify-center gap-6"
           >
-            <div className="flex items-center gap-3 bg-card px-6 py-4 rounded-2xl border border-border shadow-sm">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center">
+            <div className="flex items-center gap-3  px-6 py-4 rounded-2xl border border-border shadow-sm">
+              <div className="w-12 h-12 bg-linear-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center">
                 <Map className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
@@ -64,8 +64,8 @@ export default function RoadmapsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-card px-6 py-4 rounded-2xl border border-border shadow-sm">
-              <div className="w-12 h-12 bg-gradient-to-br from-secondary to-secondary/80 rounded-xl flex items-center justify-center">
+            <div className="flex items-center gap-3  px-6 py-4 rounded-2xl border border-border shadow-sm">
+              <div className="w-12 h-12 bg-linear-to-br from-secondary to-secondary/80 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">

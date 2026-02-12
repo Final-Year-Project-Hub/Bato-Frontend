@@ -1,10 +1,9 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Clock, ArrowRight, BarChart3, Map } from "lucide-react";
+import { motion } from "framer-motion";
+import { Clock, BarChart3, Map } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 interface RoadmapCardProps {
   id: string;
@@ -27,7 +26,6 @@ export const RoadmapCard = ({
   gradient,
   index,
 }: RoadmapCardProps) => {
-  const [open, setOpen] = useState(false);
   const router = useRouter();
 
   return (
@@ -35,107 +33,82 @@ export const RoadmapCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: index * 0.08 }}
-      whileHover={{ y: -6, scale: 1.015 }}
-      onMouseLeave={() => setOpen(false)}
-      className="group relative bg-background rounded-xl border border-border overflow-visible hover:shadow-2xl transition"
+      whileHover={{ y: -4 }}
+      className="group relative bg-background rounded-xl border border-border 
+                 overflow-hidden hover:shadow-xl transition-all duration-300
+                 flex flex-col"
     >
       {/* Glow */}
       <div
         className={`absolute top-0 right-0 w-40 h-40 ${gradient}
-                    opacity-5 blur-3xl group-hover:opacity-15 transition`}
+                    opacity-5 blur-3xl group-hover:opacity-10 transition`}
       />
 
-      {/* Arrow + Dropdown */}
-      <div className="absolute top-4 right-4 z-30">
-        <motion.button
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpen((prev) => !prev);
-          }}
-          className="w-9 h-9 rounded-full bg-grey flex items-center justify-center
-                     opacity-0 group-hover:opacity-100
-                     hover:bg-primary hover:text-white transition"
-        >
-          <motion.div
-            whileHover={{ rotate: 90, x: 2 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <ArrowRight className="w-4 h-4" />
-          </motion.div>
-        </motion.button>
-
-        {/* Dropdown */}
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.96 }}
-              transition={{ duration: 0.12 }}
-              className="absolute right-0 mt-2 w-44 bg-background border border-border
-                         rounded-lg shadow-xl z-50 overflow-hidden"
-            >
-              {/*  Use router.push here */}
-              {id && (
-                <button
-                  onClick={() => {
-                    console.log("roadmapId click =", id);
-                    router.push(
-                      `/dashboard/my-roadmaps/${encodeURIComponent(id)}`,
-                    );
-                  }}
-                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm hover:bg-grey transition"
-                >
-                  <Map className="w-4 h-4 text-primary" />
-                  View Full Roadmap
-                </button>
-              )}
-
-              <div className="h-px bg-border" />
-
-              <button
-                onClick={() =>
-                  router.push(`/progresstracker/${id}`)
-                }
-                className="w-full text-left flex items-center gap-2 px- py-2 text-sm hover:bg-grey transition"
-              >
-                <BarChart3 className="w-4 h-4 ml-3 text-primary" />
-                Progress Tracker
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
       {/* Card Content */}
-      <div className="relative p-6">
-        <div
-          className={`w-15 h-15  ${color} rounded-lg flex items-center justify-center mb-6 shadow-xl`}
-        >
-          <Icon className="w-7 h-7 text-white" />
-        </div>
+      <div className="relative flex flex-col flex-1 p-5 gap-4 ">
 
-        <h3 className="text-lg font-bold mb-3">{title}</h3>
-
-        <p className="text-sm text-foreground/70 mb-6 min-h-12">
-          {description}
-        </p>
-
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-grey px-4 py-2 rounded-xl border border-border">
-            <Clock className="w-4 h-4 text-primary" />
-            <span className="text-sm font-bold">{estimatedHours}h</span>
+        {/* Top Row: Icon + Hours */}
+        <div className="flex items-center justify-between">
+          <div className={`w-11 h-11 ${color} rounded-lg flex items-center justify-center shadow-md`}>
+            <Icon className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xs text-foreground/50">estimated</span>
+
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="w-3.5 h-3.5" />
+            <span className="text-xs font-semibold">{estimatedHours}h</span>
+          </div>
         </div>
 
-        <motion.div
-          className={`absolute bottom-0 left-0 right-0 h-1.5 ${color}`}
-          initial={{ scaleX: 0 }}
-          whileHover={{ scaleX: 1 }}
-          transition={{ duration: 0.25 }}
-        />
+        {/* Title + Description */}
+        <div className="flex flex-col gap-1.5 flex-1">
+          <h3 className="text-sm font-semibold text-foreground line-clamp-1">
+            {title}
+          </h3>
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+            {description}
+          </p>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px bg-border" />
+
+        {/* Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={() =>
+              router.push(`/dashboard/my-roadmaps/${encodeURIComponent(id)}`)
+            }
+            className="flex-1 flex items-center justify-center gap-1.5 py-2
+                       text-xs font-medium rounded-lg border border-border
+                       bg-transparent hover:bg-primary hover:text-white
+                       hover:border-primary text-foreground/70
+                       transition-all duration-200"
+          >
+            <Map className="w-3.5 h-3.5" />
+            Roadmap
+          </button>
+
+          <button
+            onClick={() => router.push(`/progresstracker/${id}`)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2
+                       text-xs font-medium rounded-lg border border-border
+                       bg-transparent hover:bg-primary hover:text-white
+                       hover:border-primary text-foreground/70
+                       transition-all duration-200"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            Progress
+          </button>
+        </div>
       </div>
+
+      {/* Bottom accent */}
+      <motion.div
+        className={`absolute bottom-0 left-0 right-0 h-0.5 ${color}`}
+        initial={{ scaleX: 0 }}
+        whileHover={{ scaleX: 1 }}
+        transition={{ duration: 0.25 }}
+      />
     </motion.div>
   );
 };

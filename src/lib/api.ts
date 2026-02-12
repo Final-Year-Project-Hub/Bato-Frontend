@@ -41,13 +41,28 @@ export async function apiFetch<K extends keyof ApiRoutes>(
     console.log("API Fetch - Response Status:", res.status);
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+      const rawText = await res.text().catch(() => "");
+      console.error("API error - status:", res.status);
+      console.error("API error - raw body:", rawText);
+
+      let message = "";
+      try {
+        const errorData = JSON.parse(rawText);
+        message =
+          errorData.message ||
+          errorData.error ||
+          errorData.detail ||
+          JSON.stringify(errorData);
+      } catch {
+        message = rawText.trim();
+      }
+
+      throw new Error(message || `HTTP error! status: ${res.status}`);
     }
 
     const data = await res.json().catch(() => null);
     console.log("API Fetch - Response Data:", data);
-    
+
     return data;
   } catch (error) {
     console.error("API Fetch Error:", error);
