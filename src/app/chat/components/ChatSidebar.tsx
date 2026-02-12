@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import LogoutModal from "./LogoutModal";
 import { apiFetch } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 const roadmaps = [
   "React Roadmap",
@@ -48,7 +49,7 @@ export default function ChatSidebar() {
   const email = auth.user?.email || "";
   const displayName = auth.user?.name || auth.user?.email || "User";
   const initial = (displayName?.trim()?.[0] || "U").toUpperCase();
-  const userImage = auth.user?.image; // Get user image from auth
+  const userImage = auth.user?.image;
 
   const { getChats } = useChat();
   const [isLoadingChats, setIsLoadingChats] = useState(false);
@@ -97,6 +98,9 @@ export default function ChatSidebar() {
   }, [userId, getChats]);
 
   const handleLogout = async () => {
+    // Show loading toast
+    toast.loading("Logging out...");
+
     try {
       // backend logout
       await apiFetch("/auth/logout", { method: "POST" });
@@ -113,6 +117,10 @@ export default function ChatSidebar() {
 
     //  update auth UI state
     await auth.refresh();
+
+    // Dismiss loading toast and show success
+    toast.dismiss();
+    toast.success("Logged out successfully");
 
     // hard redirect so no cached protected UI remains
     router.replace("/login");
@@ -227,7 +235,6 @@ export default function ChatSidebar() {
           )}
         </div>
 
-        {/* User Profile Section */}
         {/* User Profile Section */}
         <div className="w-full border-t border-sidebar-border px-4 py-3">
           <div className="flex items-center justify-between gap-3">

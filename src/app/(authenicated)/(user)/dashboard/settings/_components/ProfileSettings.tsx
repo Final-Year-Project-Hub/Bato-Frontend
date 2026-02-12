@@ -134,7 +134,7 @@ export default function ProfileSettings() {
             name: values.name,
             email: values.email,
           } as UpdateProfileData),
-        }
+        }   
       );
 
       const data: UpdateProfileResponse = await res.json();

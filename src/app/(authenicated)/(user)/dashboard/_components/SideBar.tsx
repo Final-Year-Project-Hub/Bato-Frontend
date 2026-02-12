@@ -18,6 +18,7 @@ import LogoutModal from "@/app/chat/components/LogoutModal";
 import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 type ViewType = "dashboard" | "settings" | "roadmaps" | "chat";
 
@@ -50,6 +51,9 @@ export default function SideBar({
   const userImage = auth.user?.image; // Get user image from auth
 
   const handleLogout = async () => {
+    // Show loading toast
+    toast.loading("Logging out...");
+
     try {
       // backend logout
       await apiFetch("/auth/logout", { method: "POST" });
@@ -66,6 +70,10 @@ export default function SideBar({
 
     //  update auth UI state
     await auth.refresh();
+
+    // Dismiss loading toast and show success
+    toast.dismiss();
+    toast.success("Logged out successfully");
 
     // hard redirect so no cached protected UI remains
     router.replace("/login");
@@ -131,7 +139,7 @@ export default function SideBar({
             className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity flex-1"
           >
             {/* Avatar with image or initial */}
-            <Avatar className="h-9 w-9 flex-shrink-0">
+            <Avatar className="h-9 w-9 shrink-0">
               <AvatarImage src={userImage || ""} alt={displayName} className="object-cover" />
               <AvatarFallback className="bg-primary/15 text-primary font-semibold">
                 {initial}
@@ -155,7 +163,7 @@ export default function SideBar({
               variant="ghost"
               size="sm"
               onClick={() => setShowLogout(true)}
-              className="text-card-foreground hover:text-foreground flex-shrink-0"
+              className="text-card-foreground hover:text-foreground shrink-0"
             >
               <LogOut className="h-4 w-4" />
             </Button>

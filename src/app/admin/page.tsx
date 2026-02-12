@@ -1,18 +1,128 @@
 "use client";
 
-import { Users, Map, DollarSign, Cpu, TrendingUp, FileText } from "lucide-react";
+import { Users, Map, DollarSign, Cpu, BadgeQuestionMark, FileText } from "lucide-react";
 import StatsCard from "./_components/StatsCard";
+import { useEffect, useState } from "react";
 
+interface DashboardStats {
+  totalUsers: number;
+  totalRoadmaps: number;
+  revenue: number;
+  llmCosts: number;
+  totalDocuments: number;
+  quizzesAttempted: number;
+}
 
 export default function AdminDashboard() {
- 
-  const stats = [
-    { title: "Total Users", value: "1,234", icon: Users, change: "+12%", color: "bg-blue-500" },
-    { title: "Total Roadmaps", value: "89", icon: Map, change: "+8%", color: "bg-purple-500" },
-    { title: "Revenue", value: "Rs12,450", icon: DollarSign, change: "+23%", color: "bg-green-500" },
-    { title: "LLM Costs", value: "$3,200", icon: Cpu, change: "+5%", color: "bg-orange-500" },
-    { title: "Documents", value: "456", icon: FileText, change: "+15%", color: "bg-indigo-500" },
-    { title: "Active Users", value: "892", icon: TrendingUp, change: "+18%", color: "bg-pink-500" },
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalRoadmaps: 0,
+    revenue: 0,
+    llmCosts: 0,
+    totalDocuments: 0,
+    quizzesAttempted: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboardStats() {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        
+        // Fetch users data (includes roadmaps info)
+        const usersResponse = await fetch(`${baseUrl}/api/user/getAllUsers`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        let totalUsers = 0;
+        let totalRoadmaps = 0;
+
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          if (usersData?.data && Array.isArray(usersData.data)) {
+            totalUsers = usersData.data.length;
+            
+            // Count total roadmaps from all users
+            totalRoadmaps = usersData.data.reduce((count: number, user: any) => {
+              return count + (user.roadmaps?.length || 0);
+            }, 0);
+          }
+        }
+
+        // Fetch quiz attempts
+        const quizResponse = await fetch(`${baseUrl}/api/quiz/quizAttempts`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        let quizCount = 0;
+        if (quizResponse.ok) {
+          const quizData = await quizResponse.json();
+          quizCount = Array.isArray(quizData) ? quizData.length : 0;
+        }
+
+        setStats({
+          totalUsers: totalUsers,
+          totalRoadmaps: totalRoadmaps,
+          revenue: 12450, // TODO: Add revenue API
+          llmCosts: 3200, // TODO: Add LLM costs API
+          totalDocuments: 5, // TODO: Add documents API
+          quizzesAttempted: quizCount,
+        });
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardStats();
+  }, []);
+
+  const statsCards = [
+    { 
+      title: "Total Users", 
+      value: loading ? "..." : stats.totalUsers.toLocaleString(), 
+      icon: Users, 
+      color: "bg-blue-500" 
+    },
+    { 
+      title: "Total Roadmaps", 
+      value: loading ? "..." : stats.totalRoadmaps.toString(), 
+      icon: Map, 
+      color: "bg-purple-500" 
+    },
+    { 
+      title: "Revenue", 
+      value: loading ? "..." : `Rs${stats.revenue.toLocaleString()}`, 
+      icon: DollarSign, 
+      color: "bg-green-500" 
+    },
+    { 
+      title: "LLM Costs", 
+      value: loading ? "..." : `$${stats.llmCosts.toLocaleString()}`, 
+      icon: Cpu, 
+      color: "bg-orange-500" 
+    },
+    { 
+      title: "Documents", 
+      value: loading ? "..." : stats.totalDocuments.toString(), 
+      icon: FileText, 
+      color: "bg-indigo-500" 
+    },
+    { 
+      title: "Quizzes Attempted", 
+      value: loading ? "..." : stats.quizzesAttempted.toString(), 
+      icon: BadgeQuestionMark, 
+      color: "bg-pink-500" 
+    },
   ];
 
   return (
@@ -25,12 +135,10 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
+        {statsCards.map((stat, index) => (
           <StatsCard key={index} {...stat} />
         ))}
       </div>
-
-    
     </div>
   );
 }

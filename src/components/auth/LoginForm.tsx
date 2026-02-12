@@ -85,12 +85,6 @@ export default function LoginForm() {
       })) as LoginResponse;
 
       if (res.success) {
-        toast.success("Login successful", {
-          id: toastId,
-          description: "Welcome back to bato.ai",
-          duration: 2500,
-        });
-
         await fetch("/api/session/set", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -105,7 +99,7 @@ export default function LoginForm() {
         const userRole = res.data?.user?.role || res.data?.role;
         const userName = res.data?.user?.name || "User";
 
-        // Show role-specific success toast
+        // Show role-specific success toast (only one toast)
         if (userRole === "admin" || userRole === "ADMIN") {
           toast.success("Admin login successful", {
             id: toastId,
@@ -115,7 +109,7 @@ export default function LoginForm() {
         } else {
           toast.success("Login successful", {
             id: toastId,
-            description: `Welcome back, ${userName}!`,
+            description: `Welcome to bato.ai, ${userName}!`,
             duration: 2500,
           });
         }
@@ -163,50 +157,6 @@ export default function LoginForm() {
       console.log("[Google Login] Backend URL:", backendUrl);
       console.log("[Google Login] Fetching from:", `${backendUrl}/auth/google`);
         window.location.href=`${backendUrl}/auth/google`;
-      // const response = await fetch(`${backendUrl}/auth/google`, {
-      //   method: "GET",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      // });
-
-  //     console.log("[Google Login] Response status:", response.status);
-  //     console.log("[Google Login] Response ok:", response.ok);
-  //     console.log("[Google Login] Response headers:", Object.fromEntries(response.headers.entries()));
-
-  //     if (!response.ok) {
-  //       const errorText = await response.text();
-  //       console.error("[Google Login] Response not OK. Status:", response.status);
-  //       console.error("[Google Login] Error text:", errorText);
-        
-  //       toast.error("Unable to connect to Google", {
-  //         id: toastId,
-  //         description: `Server error: ${response.status}`,
-  //       });
-  //       return;
-  //     }
-
-  //     const data = await response.json();
-  //     console.log("[Google Login] Response data:", data);
-
-  //     if (data.success && data.authUrl) {
-  //       console.log("[Google Login] Auth URL received:", data.authUrl);
-        
-  //       sessionStorage.setItem('google_login_flow', 'true');
-  //       toast.dismiss(toastId);
-        
-  //       console.log("[Google Login] Redirecting to Google...");
-        
-  //       // Redirect browser to Google OAuth page
-  //       window.location.href = data.authUrl;
-  //     } else {
-  //       console.error("[Google Login] Invalid response structure:", data);
-        
-  //       toast.error("Unable to connect to Google", {
-  //         id: toastId,
-  //         description: data.message || "Invalid server response",
-  //       });
-  //     }
     } catch (error) {
       console.error("[Google Login] Fetch error caught:", error);
       console.error("[Google Login] Error name:", (error as Error).name);
