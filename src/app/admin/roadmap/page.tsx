@@ -10,7 +10,7 @@ const mockRoadmaps: Roadmap[] = [
   {
     id: 1,
     title: "React Development",
-    users: 234,
+   
     estimatedHours: 120,
     completion: 67,
     color: "bg-blue-500",
@@ -18,15 +18,15 @@ const mockRoadmaps: Roadmap[] = [
   {
     id: 2,
     title: "Next.js",
-    users: 189,
+   
     estimatedHours: 140,
     completion: 58,
     color: "bg-black",
   },
   {
     id: 3,
-    title: "Node.js Backend",
-    users: 201,
+    title: "Python",
+
     estimatedHours: 150,
     completion: 54,
     color: "bg-green-500",
@@ -51,7 +51,7 @@ export default function RoadmapsPage() {
         .toLowerCase()
         .includes(search.toLowerCase());
 
-      // 🎯 Completion filter
+      //  Completion filter
       const matchesCompletion =
         completionFilter === "all"
           ? true

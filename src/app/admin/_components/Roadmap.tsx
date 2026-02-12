@@ -1,18 +1,18 @@
 "use client";
 
 import {
-  Users,
+
   Clock,
   Code,
-  Database,
+  Cpu,
   Globe,
+ 
   type LucideIcon,
 } from "lucide-react";
 
 export type Roadmap = {
   id: number;
   title: string;
-  users: number;
   estimatedHours: number;
   completion: number;
   color: string;
@@ -21,7 +21,7 @@ export type Roadmap = {
 const roadmapIcons: Record<string, LucideIcon> = {
   "React Development": Code,
   "Next.js": Globe,
-  "Node.js Backend": Database,
+  "Python": Cpu,
 };
 
 export default function RoadmapsTable({
@@ -39,9 +39,6 @@ export default function RoadmapsTable({
                 Roadmap
               </th>
               <th className="text-left px-6 py-4 text-sm font-semibold">
-                Users Enrolled
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-semibold">
                 Duration
               </th>
               <th className="text-left px-6 py-4 text-sm font-semibold">
@@ -52,8 +49,7 @@ export default function RoadmapsTable({
 
           <tbody>
             {roadmaps.map((roadmap) => {
-              const Icon =
-                roadmapIcons[roadmap.title] ?? Code;
+              const Icon = roadmapIcons[roadmap.title] ?? Code;
 
               return (
                 <tr
@@ -74,14 +70,6 @@ export default function RoadmapsTable({
                     </div>
                   </td>
 
-                  {/* Users */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-foreground/70">
-                      <Users className="w-4 h-4" />
-                      {roadmap.users}
-                    </div>
-                  </td>
-
                   {/* Duration */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 text-foreground/70">
@@ -96,11 +84,11 @@ export default function RoadmapsTable({
                       <div className="flex-1 bg-grey rounded-full h-2 max-w-32">
                         <div
                           className={`${roadmap.color} h-2 rounded-full`}
-                          style={{ width: `${roadmap.completion}%` }}
+                          style={{ width: `0%` }}
                         />
                       </div>
                       <span className="text-sm text-foreground/70 min-w-10">
-                        {roadmap.completion}%
+                        0%
                       </span>
                     </div>
                   </td>
@@ -111,7 +99,7 @@ export default function RoadmapsTable({
             {roadmaps.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={3}
                   className="px-6 py-8 text-center text-foreground/60"
                 >
                   No roadmaps found
