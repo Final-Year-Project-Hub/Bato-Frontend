@@ -35,6 +35,8 @@ const TITLES = [
   { normal: "Level Up Your ", highlight: "Skills Today!!" },
 ];
 
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function ChatInterface({
   initialChatId,
 }: {
@@ -845,6 +847,7 @@ function ChatBubble({
     return { goal, metadata, phases };
   };
 
+
   // Beautiful roadmap rendering (only when streaming is complete)
   const renderBeautifulRoadmap = (text: string, roadmapId?: string) => {
     const { goal, metadata, phases } = parseRoadmap(text);
@@ -912,17 +915,12 @@ function ChatBubble({
 
         {/* CTA BUTTON */}
         {roadmapId && (
-          <div className="pt-4 flex justify-end">
+          <div className=" flex justify-end">
             <button
-              onClick={() => {
-                console.log("roadmapId click =", roadmapId);
-                router.push(
-                  `/dashboard/my-roadmaps/${encodeURIComponent(roadmapId)}`,
-                );
-              }}
-              className="text-primary hover:text-primary/80 font-medium transition-colors"
+              onClick={() => router.push(`/dashboard/my-roadmaps/${encodeURIComponent(roadmapId)}`)}
+              className="text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer"
             >
-              View Full Roadmap →
+              View →
             </button>
           </div>
         )}

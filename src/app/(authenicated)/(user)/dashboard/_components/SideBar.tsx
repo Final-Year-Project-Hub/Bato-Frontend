@@ -7,7 +7,6 @@ import {
   Waypoints,
   Settings,
   MessageCircle,
-  
   LogOut,
 } from "lucide-react";
 import clsx from "clsx";
@@ -40,6 +39,7 @@ export default function SideBar({
   onViewChange: (view: ViewType) => void;
 }) {
   const [showLogout, setShowLogout] = useState(false);
+  const [loadLogout, setLoadLogout] = useState(false);
   const router = useRouter();
 
   const auth = useAuth();
@@ -49,6 +49,7 @@ export default function SideBar({
   const displayName = auth.user?.name || auth.user?.email || "User";
   const initial = (displayName?.trim()?.[0] || "U").toUpperCase();
   const userImage = auth.user?.image; // Get user image from auth
+  const avatarSrc = userImage?.trim() ? userImage : undefined;
 
   const handleLogout = async () => {
     // Show loading toast
@@ -140,7 +141,13 @@ export default function SideBar({
           >
             {/* Avatar with image or initial */}
             <Avatar className="h-9 w-9 shrink-0">
-              <AvatarImage src={userImage || undefined} alt={displayName} className="object-cover" />
+              {avatarSrc ? (
+                <AvatarImage
+                  src={avatarSrc}
+                  alt={displayName}
+                  className="object-cover"
+                />
+              ) : null}
               <AvatarFallback className="bg-primary/15 text-primary font-semibold">
                 {initial}
               </AvatarFallback>
@@ -152,7 +159,9 @@ export default function SideBar({
                 <p className="text-sm font-medium text-foreground truncate">
                   {auth.user?.name ?? "User"}
                 </p>
-                <p className="text-xs text-muted-foreground truncate">{email}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {email}
+                </p>
               </div>
             )}
           </button>
@@ -168,7 +177,7 @@ export default function SideBar({
               <LogOut className="h-4 w-4" />
             </Button>
           )}
-          
+
           <LogoutModal
             open={showLogout}
             onClose={() => setShowLogout(false)}

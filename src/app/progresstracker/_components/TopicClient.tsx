@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import LessonPage, { LessonResponse } from "./LessonPage";
+import CustomSkeleton from "@/components/ui/CustomSkeleton";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://bato-backend-a9x8.onrender.com";
@@ -148,9 +149,9 @@ export default function TopicClient({
     return () => controller.abort();
   }, [phaseId, goal, topicId, roadmapIdFromQuery]);
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <CustomSkeleton />;
   if (err) return <div className="p-6 text-red-500">{err}</div>;
-  if (!lesson) return <div className="p-6">Loading...</div>;
+  if (!lesson) return <div className="p-6"><CustomSkeleton /></div>;
 
   return (
      <LessonPage

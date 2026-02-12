@@ -50,6 +50,7 @@ export default function ChatSidebar() {
   const displayName = auth.user?.name || auth.user?.email || "User";
   const initial = (displayName?.trim()?.[0] || "U").toUpperCase();
   const userImage = auth.user?.image;
+  const avatarSrc = userImage?.trim() ? userImage : undefined;
 
   const { getChats } = useChat();
   const [isLoadingChats, setIsLoadingChats] = useState(false);
@@ -245,11 +246,13 @@ export default function ChatSidebar() {
             >
               {/* Avatar with image or initial */}
               <Avatar className="h-9 w-9 shrink-0">
-                <AvatarImage
-                  src={userImage || ""}
-                  alt={displayName}
-                  className="object-cover"
-                />
+                {avatarSrc ? (
+                  <AvatarImage
+                    src={userImage || ""}
+                    alt={displayName}
+                    className="object-cover"
+                  />
+                ) : null}
                 <AvatarFallback className="bg-primary/15 text-primary font-semibold">
                   {initial}
                 </AvatarFallback>
@@ -294,6 +297,7 @@ export default function ChatSidebar() {
       <SearchChatModal
         open={openSearch}
         chats={chatTitles}
+        chatIds={chats.map((c) => c.id)}
         onClose={() => setOpenSearch(false)}
         onSelectChat={onSelectChatTitle}
         onNewChat={handleNewChat}

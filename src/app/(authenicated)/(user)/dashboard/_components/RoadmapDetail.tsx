@@ -1,7 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, ExternalLink, Clock, Target, BookOpen, Zap } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Clock,
+  Target,
+  BookOpen,
+  Zap,
+  MoveRight,
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type Subtopic = {
   title: string;
@@ -34,18 +47,58 @@ type RoadmapData = {
   key_technologies?: string[];
   prerequisites?: string[];
   next_steps?: string[];
+  isSelected?: boolean;
 };
 
 type RoadmapDetailProps = {
   data: RoadmapData;
+  roadmapId: string;
   className?: string;
 };
 
-export default function RoadmapDetail({ data, className = "" }: RoadmapDetailProps) {
-  const [expandedPhases, setExpandedPhases] = useState<Record<number, boolean>>(() => {
-    // Expand first phase by default
-    return { 0: true };
-  });
+const baseUrl =
+  process.env.NEXT_PUBLIC_BASE_URL || "https://bato-backend-a9x8.onrender.com";
+
+export default function RoadmapDetail({
+  data,
+  roadmapId,
+  className = "",
+}: RoadmapDetailProps) {
+  const [expandedPhases, setExpandedPhases] = useState<Record<number, boolean>>(
+    () => {
+      // Expand first phase by default
+      return { 0: true };
+    },
+  );
+  const [selecting, setSelecting] = useState(false);
+
+  const router = useRouter();
+  const handleSelectRoadmap = async () => {
+    if (selecting) return;
+
+    try {
+      setSelecting(true);
+
+      const res = await fetch(`${baseUrl}/api/roadmap/${roadmapId}/select`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        toast.success("Roadmap selected successfully");
+        router.push(`/progresstracker/${roadmapId}`);
+        return;
+      }
+
+      const msg = await res.text().catch(() => "");
+      toast.error(msg || "Failed to select roadmap");
+    } catch {
+      toast.error("Error selecting roadmap");
+    } finally {
+      setSelecting(false);
+    }
+  };
 
   const togglePhase = (index: number) => {
     setExpandedPhases((prev) => ({
@@ -65,25 +118,46 @@ export default function RoadmapDetail({ data, className = "" }: RoadmapDetailPro
   const collapseAll = () => {
     setExpandedPhases({});
   };
-
+console.log("isSelected",data?.isSelected)
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header Section */}
       <div className="bg-primary/10 p-5 rounded-lg border-l-4 border-primary">
         <h2 className="text-2xl font-bold text-foreground mb-3">{data.goal}</h2>
-        <div className="flex flex-wrap gap-3 text-sm">
-          <span className="bg-muted px-3 py-1.5 rounded-full text-foreground/80 flex items-center gap-2">
-            <Target size={14} />
-            {data.intent}
-          </span>
-          <span className="bg-muted px-3 py-1.5 rounded-full text-foreground/80 flex items-center gap-2">
-            <BookOpen size={14} />
-            {data.proficiency}
-          </span>
-          <span className="bg-primary/30 px-3 py-1.5 rounded-full text-primary flex items-center gap-2">
-            <Clock size={14} />
-            {data.total_estimated_hours} hours total
-          </span>
+        <div className="flex justify-between items-center">
+          <div className="flex flex-wrap gap-3 text-sm ">
+            <span className="bg-muted px-3 py-1.5 rounded-full text-foreground/80 flex items-center gap-2 shrink-0">
+              <Target size={14} />
+              {data.intent}
+            </span>
+            <span className="bg-muted px-3 py-1.5 rounded-full text-foreground/80 flex items-center gap-2 shrink-0">
+              <BookOpen size={14} />
+              {data.proficiency}
+            </span>
+            <span className="bg-primary/30 px-3 py-1.5 rounded-full text-white flex items-center gap-2 shrink-0">
+              <Clock size={14} />
+              {data.total_estimated_hours} hours total
+            </span>
+          </div>
+          {data.isSelected  ? (
+            <Button>Progress </Button>
+          ) : (
+            <Button
+              className="shrink-0 text-lg"
+              disabled={selecting}
+              onClick={handleSelectRoadmap}
+            >
+              {selecting ? (
+                <>
+                  Tracking <Loader2 className="animate-spin" />
+                </>
+              ) : (
+                <>
+                  Track <MoveRight />
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -110,10 +184,15 @@ export default function RoadmapDetail({ data, className = "" }: RoadmapDetailPro
       {/* Prerequisites */}
       {data.prerequisites && data.prerequisites.length > 0 && (
         <div className="bg-card p-4 rounded-lg border border-border">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-3">Prerequisites</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+            Prerequisites
+          </h3>
           <ul className="space-y-2">
             {data.prerequisites.map((prereq, idx) => (
-              <li key={idx} className="text-sm text-foreground/80 flex items-start gap-2">
+              <li
+                key={idx}
+                className="text-sm text-foreground/80 flex items-start gap-2"
+              >
                 <span className="text-primary mt-0.5">•</span>
                 {prereq}
               </li>
@@ -161,9 +240,13 @@ export default function RoadmapDetail({ data, className = "" }: RoadmapDetailPro
                     <span className="text-primary font-bold text-lg">
                       {String(phaseIdx + 1).padStart(2, "0")}
                     </span>
-                    <h4 className="text-lg font-bold text-foreground">{phase.title}</h4>
+                    <h4 className="text-lg font-bold text-foreground">
+                      {phase.title}
+                    </h4>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2 ml-9">{phase.description}</p>
+                  <p className="text-sm text-muted-foreground mt-2 ml-9">
+                    {phase.description}
+                  </p>
                 </div>
                 <div className="flex items-center gap-3 ml-4">
                   <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full whitespace-nowrap">
@@ -214,7 +297,10 @@ export default function RoadmapDetail({ data, className = "" }: RoadmapDetailPro
                     {topic.subtopics && topic.subtopics.length > 0 && (
                       <div className="ml-6 pl-4 border-l-2 border-border space-y-3">
                         {topic.subtopics.map((subtopic, subIdx) => (
-                          <div key={subIdx} className="flex items-start justify-between">
+                          <div
+                            key={subIdx}
+                            className="flex items-start justify-between"
+                          >
                             <div className="flex-1">
                               <h6 className="text-xs font-medium text-foreground/80">
                                 {subtopic.title}
@@ -257,10 +343,15 @@ export default function RoadmapDetail({ data, className = "" }: RoadmapDetailPro
       {/* Next Steps */}
       {data.next_steps && data.next_steps.length > 0 && (
         <div className="bg-green-500/10 p-4 rounded-lg border-l-4 border-green-500">
-          <h3 className="text-sm font-semibold text-green-400 mb-3">Next Steps</h3>
+          <h3 className="text-sm font-semibold text-green-400 mb-3">
+            Next Steps
+          </h3>
           <ul className="space-y-2">
             {data.next_steps.map((step, idx) => (
-              <li key={idx} className="text-sm text-foreground/80 flex items-start gap-2">
+              <li
+                key={idx}
+                className="text-sm text-foreground/80 flex items-start gap-2"
+              >
                 <span className="text-green-400 mt-0.5">•</span>
                 {step}
               </li>
@@ -271,10 +362,14 @@ export default function RoadmapDetail({ data, className = "" }: RoadmapDetailPro
 
       {/* Progress Summary */}
       <div className="bg-card p-4 rounded-lg border border-border">
-        <h3 className="text-sm font-semibold text-muted-foreground mb-3">Summary</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+          Summary
+        </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-primary">{data.phases.length}</div>
+            <div className="text-2xl font-bold text-primary">
+              {data.phases.length}
+            </div>
             <div className="text-xs text-muted-foreground">Phases</div>
           </div>
           <div>
@@ -287,8 +382,9 @@ export default function RoadmapDetail({ data, className = "" }: RoadmapDetailPro
             <div className="text-2xl font-bold text-primary">
               {data.phases.reduce(
                 (acc, p) =>
-                  acc + p.topics.reduce((a, t) => a + (t.subtopics?.length || 0), 0),
-                0
+                  acc +
+                  p.topics.reduce((a, t) => a + (t.subtopics?.length || 0), 0),
+                0,
               )}
             </div>
             <div className="text-xs text-muted-foreground">Subtopics</div>
