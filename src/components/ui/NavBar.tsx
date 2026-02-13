@@ -45,7 +45,7 @@ export default function NavBar() {
   // MOBILE NAV
   if (isMobile) {
     return (
-      <nav className="h-16 shadow-sm z-50 relative w-full flex justify-between items-center px-4 py-2 mx-auto bg-background border border-b-border">
+      <nav className="h-16 shadow-sm z-50 relative w-full flex justify-between items-center px-4 py-2 mx-auto bg-background border-b border-b-border">
         <Link href="/" className="cursor-pointer">
           <Image
             src="/logo.svg"
@@ -119,7 +119,7 @@ export default function NavBar() {
 
   // DESKTOP NAV
   return (
-    <nav className="sticky top-0 z-50 h-18.5 hidden lg:block bg-background border border-b-border">
+    <nav className="sticky top-0 z-50 h-18.5 hidden lg:block bg-background border-b border-b-border">
       <div className="relative my-container w-full h-full flex justify-between items-center">
         {/* Left Logo */}
         <div className="flex items-center">

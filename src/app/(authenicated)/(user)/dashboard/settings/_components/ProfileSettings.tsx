@@ -159,7 +159,7 @@ export default function ProfileSettings() {
         await refresh();
       }
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error("Something went wrong", { id: toastId });
     } finally {
       setIsSubmitting(false);
@@ -212,7 +212,7 @@ export default function ProfileSettings() {
       setShowOtpModal(false);
       await refresh();
     } catch (err) {
-      console.error(err);
+      // console.error(err);
       toast.error("OTP verification failed", { id: toastId });
     }
   }
@@ -279,11 +279,11 @@ export default function ProfileSettings() {
         let errorMessage;
         try {
           const errorData = await res.json();
-          console.error(" Error response:", errorData);
+          // console.error(" Error response:", errorData);
           errorMessage = errorData.message || errorData.error || `Upload failed: ${res.status}`;
         } catch {
           const errorText = await res.text();
-          console.error(" Error response (text):", errorText);
+          // console.error(" Error response (text):", errorText);
           errorMessage = `Upload failed: ${res.status}`;
         }
         toast.error(errorMessage, { id: toastId });
@@ -297,7 +297,7 @@ export default function ProfileSettings() {
       const imageUrl = data.updatedUser?.image || data.image;
       
       if (!imageUrl) {
-        console.error("No image URL in response");
+        // console.error("No image URL in response");
         toast.error("Upload failed: No image URL returned", { id: toastId });
         return;
       }
@@ -314,7 +314,7 @@ export default function ProfileSettings() {
       await refresh();
       console.log("User data refreshed");
     } catch (err) {
-      console.error(" Upload error:", err);
+      // console.error(" Upload error:", err);
       
       if (err instanceof TypeError && err.message.includes("fetch")) {
         toast.error("Network error: Cannot reach server", { id: toastId });

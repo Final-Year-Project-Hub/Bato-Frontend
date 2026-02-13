@@ -59,14 +59,20 @@ export default function SideBar({
       // backend logout
       await apiFetch("/auth/logout", { method: "POST" });
     } catch (e) {
-      console.error("Backend logout failed (continuing):", e);
+      // console.error("Backend logout failed (continuing):", e);
+      toast.error("Error Logging Out.", {
+        description: "Error details: " + (e instanceof Error ? e.message : String(e)),
+      });
     }
 
     try {
       // clear localhost cookies used by middleware
       await fetch("/api/session/clear", { method: "POST" });
     } catch (e) {
-      console.error("Local cookie clear failed:", e);
+      // console.error("Local cookie clear failed:", e);
+      toast.error("Error Logging Out.", {
+        description: "Error details: " + (e instanceof Error ? e.message : String(e)),
+      });
     }
 
     //  update auth UI state

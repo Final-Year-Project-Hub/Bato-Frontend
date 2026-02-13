@@ -14,6 +14,7 @@ import Logo from "@/components/Logo";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
 import { toast } from "sonner";
+import GoogleLogin from "./GoogleLogin";
 
 interface LoginResponse {
   success: boolean;
@@ -71,7 +72,7 @@ export default function LoginForm() {
 
     return "";
   };
-  
+
   const onSubmit = async (data: LoginFormValues) => {
     const toastId = toast.loading("Signing you in...");
 
@@ -140,44 +141,12 @@ export default function LoginForm() {
           : errorMessage,
       });
 
-      console.error("Login error:", error);
+      // console.error("Login error:", error);
+      toast.error("Login error")
     }
   };
 
   // Google Login with Fetch and Full Debugging
-  const handleGoogleLogin = async () => {
-    console.log("[Google Login] Started");
-    const toastId = toast.loading("Connecting to Google...");
-
-    try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://bato-backend-a9x8.onrender.com";
-
-      console.log("[Google Login] Backend URL:", backendUrl);
-      console.log("[Google Login] Fetching from:", `${backendUrl}/auth/google`);
-        window.location.href=`${backendUrl}/auth/google`;
-    } catch (error) {
-      console.error("[Google Login] Fetch error caught:", error);
-      console.error("[Google Login] Error name:", (error as Error).name);
-      console.error("[Google Login] Error message:", (error as Error).message);
-      console.error("[Google Login] Full error:", error);
-
-      const err = error as Error;
-      
-      if (err.message.includes("CORS") || err.message.includes("fetch")) {
-        toast.error("Connection blocked", {
-          id: toastId,
-          description: "CORS policy blocking request. Contact support.",
-        });
-      } else {
-        toast.error("Connection failed", {
-          id: toastId,
-          description: err.message || "Please check your internet connection",
-        });
-      }
-    }
-  };
 
   return (
     <div className="relative min-h-screen bg-background flex items-center justify-center px-4">
@@ -263,13 +232,7 @@ export default function LoginForm() {
                 <span className="flex-1 h-px bg-border" />
               </div>
 
-              <Button
-                onClick={handleGoogleLogin}
-                type="button"
-                className="w-full h-10 bg-grey text-foreground flex items-center justify-center gap-3 hover:bg-grey/80 font-medium mt-4 border border-border"
-              >
-                <FcGoogle size={18} /> Google
-              </Button>
+              <GoogleLogin />
 
               <p className="text-center text-sm text-muted-foreground mt-5">
                 New to bato.ai?{" "}

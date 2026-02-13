@@ -22,6 +22,7 @@ import Activity, { ActivityItem } from "./_components/Activity";
 import { useRoadmaps } from "@/lib/hooks/useRoadmaps";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/app/features/auth/hooks/useAuth";
+import { toast } from "sonner";
 
 type Stat = {
   id: string;
@@ -182,7 +183,8 @@ export default function Page() {
           setQuizAttempts(Array.isArray(data) ? data.length : 0);
         }
       } catch (error) {
-        console.error("Failed to fetch quiz attempts:", error);
+        // console.error("Failed to fetch quiz attempts:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to load quiz attempts");
       } finally {
         setQuizLoading(false);
       }
@@ -210,7 +212,8 @@ export default function Page() {
           setRecentActivities(mapped);
         }
       } catch (error) {
-        console.error("Failed to fetch recent activity:", error);
+        // console.error("Failed to fetch recent activity:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to load recent activity");
       } finally {
         setActivitiesLoading(false);
       }

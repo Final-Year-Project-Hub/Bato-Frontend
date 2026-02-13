@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 type User = {
   id: string;
@@ -102,7 +103,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(finalUserData);
     } catch (error) {
-      console.error(" Auth refresh error:", error);
+      // console.error(" Auth refresh error:", error);
+      toast.error("Failed to refresh authentication. Please try again.");
       localStorage.removeItem('userId'); // Clear cache on error
       setUser(null);
     } finally {
