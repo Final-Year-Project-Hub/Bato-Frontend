@@ -32,6 +32,31 @@ type Stat = {
   iconClass: string;
 };
 
+type RawActivityItem = {
+  type: string;
+  id: string;
+  title: string;
+  timestamp: string;
+  metadata: {
+    topicId?: string;
+    roadmapId?: string;
+    phaseId?: string;
+    topicTitle?: string;
+    title?: string;
+    score?: number;
+    result?: string;
+    quizId?: string;
+    topicContentId?: string;
+  };
+};
+
+type Roadmap = {
+  id: string;
+  title: string;
+  goal: string;
+  proficiency: string;
+};
+
 const getIconForTitle = (title: string): LucideIcon => {
   const lowerTitle = title.toLowerCase();
   if (lowerTitle.includes("react")) return Code2;
@@ -58,11 +83,71 @@ const colorGradients = [
   "bg-gradient-to-br from-teal-500 to-teal-600",
 ];
 
+const ACTIVITY_STYLES: Record<
+  string,
+  { Icon: LucideIcon; iconWrapClass: string; iconClass: string; titleClass: string }
+> = {
+  TOPIC_COMPLETED: {
+    Icon: BadgeCheck,
+    iconWrapClass: "bg-emerald-100",
+    iconClass: "text-emerald-700",
+    titleClass: "text-emerald-400",
+  },
+  QUIZ_ATTEMPTED: {
+    Icon: BookOpen,
+    iconWrapClass: "bg-purple-100",
+    iconClass: "text-purple-700",
+    titleClass: "text-purple-400",
+  },
+  DEFAULT: {
+    Icon: AudioWaveform,
+    iconWrapClass: "bg-blue-100",
+    iconClass: "text-blue-700",
+    titleClass: "text-blue-400",
+  },
+};
+
+function mapActivityItem(item: RawActivityItem, roadmaps: Roadmap[]): ActivityItem {
+  const style = ACTIVITY_STYLES[item.type] ?? ACTIVITY_STYLES.DEFAULT;
+  const timestamp = new Date(item.timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - timestamp.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  let time: string;
+  if (diffMins < 1) time = "Just now";
+  else if (diffMins < 60) time = `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+  else if (diffHours < 24) time = `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  else time = `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+
+  const { roadmapId, topicId, phaseId } = item.metadata;
+
+  let href: string | undefined;
+
+  // TOPIC_COMPLETED → redirect to that specific topic page
+  if (item.type === "TOPIC_COMPLETED" && roadmapId && topicId && phaseId) {
+    const roadmap = roadmaps.find((r) => r.id === roadmapId);
+    const goal = roadmap?.goal ?? roadmap?.title ?? "";
+    href = `/progresstracker/${roadmapId}/topic/${topicId}?phaseId=${phaseId}&goal=${encodeURIComponent(goal)}&roadmapId=${roadmapId}`;
+  }
+  // QUIZ_ATTEMPTED → no link
+
+  return {
+    id: item.id,
+    title: item.title,
+    time,
+    href,
+    ...style,
+  };
+}
+
 function TopBox({ stat }: { stat: Stat }) {
   const { label, value, Icon, iconWrapClass, iconClass } = stat;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-background/60 p-6  mt-6 flex items-start justify-between">
+    <div className="rounded-xl border border-white/10 bg-background/60 p-6 mt-6 flex items-start justify-between">
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="text-3xl font-semibold text-primary">{value}</p>
@@ -79,11 +164,12 @@ export default function Page() {
   const { user } = useAuth();
   const [quizAttempts, setQuizAttempts] = useState<number>(0);
   const [quizLoading, setQuizLoading] = useState(true);
+  const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
 
   useEffect(() => {
     async function fetchQuizAttempts() {
       if (!user?.id) return;
-
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
         const response = await fetch(`${baseUrl}/api/quiz/user/${user.id}`, {
@@ -91,7 +177,6 @@ export default function Page() {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
         });
-
         if (response.ok) {
           const data = await response.json();
           setQuizAttempts(Array.isArray(data) ? data.length : 0);
@@ -102,9 +187,37 @@ export default function Page() {
         setQuizLoading(false);
       }
     }
-
     fetchQuizAttempts();
   }, [user?.id]);
+
+  // Wait for roadmaps to load first so goal can be matched
+  useEffect(() => {
+    if (loading || !roadmaps) return;
+
+    async function fetchRecentActivity() {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const response = await fetch(`${baseUrl}/api/user/recentActivity`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const mapped = (data.data as RawActivityItem[]).map((item) =>
+            mapActivityItem(item, roadmaps)
+          );
+          setRecentActivities(mapped);
+        }
+      } catch (error) {
+        console.error("Failed to fetch recent activity:", error);
+      } finally {
+        setActivitiesLoading(false);
+      }
+    }
+
+    fetchRecentActivity();
+  }, [loading, roadmaps]);
 
   const activeRoadmaps = roadmaps?.length || 0;
 
@@ -140,10 +253,7 @@ export default function Page() {
       <div className="space-y-4 pt-6">
         <div className="flex justify-between">
           <p className="text-primary text-2xl font-semibold">Your Roadmaps</p>
-          <Link
-            href="/dashboard/my-roadmaps"
-            className="text-sm text-secondary font-medium"
-          >
+          <Link href="/dashboard/my-roadmaps" className="text-sm text-secondary font-medium">
             View All
           </Link>
         </div>
@@ -155,9 +265,7 @@ export default function Page() {
             </p>
           )}
           {error && (
-            <p className="text-red-500 col-span-full text-center py-8">
-              {error}
-            </p>
+            <p className="text-red-500 col-span-full text-center py-8">{error}</p>
           )}
           {!loading && !error && roadmaps && roadmaps.length === 0 && (
             <div className="col-span-full text-center py-12">
@@ -201,11 +309,15 @@ export default function Page() {
 
       {/* ACTIVITY */}
       <div className="rounded-2xl border border-white/10 bg-background/60 p-6 mt-10">
-        <h2 className="text-xl font-semibold text-primary mb-6">
-          Recent Activity
-        </h2>
-        <div className="space-y-6">
-          {RECENT_ACTIVITIES.map((item) => (
+        <h2 className="text-xl font-semibold text-primary mb-6">Recent Activity</h2>
+        <div className="divide-y divide-white/5">
+          {activitiesLoading && (
+            <p className="text-muted-foreground text-center">Loading activity...</p>
+          )}
+          {!activitiesLoading && recentActivities.length === 0 && (
+            <p className="text-muted-foreground text-center py-4">No recent activity</p>
+          )}
+          {recentActivities.map((item) => (
             <Activity key={item.id} item={item} />
           ))}
         </div>
@@ -213,15 +325,3 @@ export default function Page() {
     </main>
   );
 }
-
-const RECENT_ACTIVITIES: ActivityItem[] = [
-  {
-    id: "completed-hooks",
-    title: 'Completed "React Hooks" lesson',
-    time: "2 hours ago",
-    Icon: BadgeCheck,
-    iconWrapClass: "bg-emerald-100",
-    iconClass: "text-emerald-700",
-    titleClass: "text-emerald-400",
-  },
-];
