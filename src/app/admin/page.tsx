@@ -9,7 +9,7 @@ interface DashboardStats {
   totalRoadmaps: number;
   revenue: number;
   llmCosts: number;
-  totalDocuments: number;
+  // totalDocuments: number;
   quizzesAttempted: number;
 }
 
@@ -19,7 +19,7 @@ export default function AdminDashboard() {
     totalRoadmaps: 0,
     revenue: 0,
     llmCosts: 0,
-    totalDocuments: 0,
+    // totalDocuments: 0,
     quizzesAttempted: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
           totalRoadmaps: totalRoadmaps,
           revenue: 12450, // TODO: Add revenue API
           llmCosts: 3200, // TODO: Add LLM costs API
-          totalDocuments: 3, // TODO: Add documents API
+          // totalDocuments: 3, // TODO: Add documents API
           quizzesAttempted: quizCount,
         });
       } catch (error) {
@@ -111,12 +111,12 @@ export default function AdminDashboard() {
       icon: Cpu, 
       color: "bg-orange-500" 
     },
-    { 
-      title: "Documents", 
-      value: loading ? "..." : stats.totalDocuments.toString(), 
-      icon: FileText, 
-      color: "bg-indigo-500" 
-    },
+    // { 
+    //   title: "Documents", 
+    //   value: loading ? "..." : stats.totalDocuments.toString(), 
+    //   icon: FileText, 
+    //   color: "bg-indigo-500" 
+    // },
     { 
       title: "Quizzes Attempted", 
       value: loading ? "..." : stats.quizzesAttempted.toString(), 
