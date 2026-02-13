@@ -24,7 +24,7 @@ const menuItems = [
   { label: "Overview", icon: LayoutDashboard, href: "/admin" },
   { label: "Users", icon: Users, href: "/admin/users" },
   { label: "Roadmaps", icon: Map, href: "/admin/roadmap" },
-  { label: "Documents", icon: FileText, href: "/admin/documents" },
+  // { label: "Documents", icon: FileText, href: "/admin/documents" },
   { label: "Revenue", icon: DollarSign, href: "/admin/revenue" },
 ];
 
