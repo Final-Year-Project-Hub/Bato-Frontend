@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import LessonPage, { LessonResponse } from "./LessonPage";
 import CustomSkeleton from "@/components/ui/CustomSkeleton";
+import { baseParseJSON } from "./jsonParser";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_BASE_URL || "https://bato-backend-a9x8.onrender.com";
@@ -71,8 +72,8 @@ function extractJsonBlockSafe(raw: string) {
 }
 
 function parseLessonJson(raw: string) {
-  const jsonText = extractJsonBlockSafe(raw);
-  return JSON.parse(jsonText);
+  const jsonText = extractJsonBlockSafe(raw); // keep this one (string-aware)
+  return baseParseJSON(jsonText);             // robust fixes + JSON.parse
 }
 
 export default function TopicClient({

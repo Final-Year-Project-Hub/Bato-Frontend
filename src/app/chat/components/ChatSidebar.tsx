@@ -10,6 +10,8 @@ import {
   PanelLeft,
   MessageSquare,
   LogOut,
+  Trash,
+  Loader2,
 } from "lucide-react";
 import clsx from "clsx";
 import SearchChatModal from "./SearchChatModal";
@@ -21,13 +23,14 @@ import LogoutModal from "./LogoutModal";
 import { apiFetch } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-
-const roadmaps = [
-  "React Roadmap",
-  "Next Roadmap",
-  "Python Roadmap",
-  "Network Programming Roadmap",
-];
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type ChatItem = {
   id: string;
@@ -35,11 +38,18 @@ type ChatItem = {
   updatedAt?: string;
 };
 
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function ChatSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
   const [chats, setChats] = useState<ChatItem[]>([]);
   const [showLogout, setShowLogout] = useState(false);
+
+  // delete dialog state
+  const [deleteChatId, setDeleteChatId] = useState<string | null>(null);
+  const [deleteChatTitle, setDeleteChatTitle] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -88,6 +98,7 @@ export default function ChatSidebar() {
         }
       } catch (e) {
         if (!cancelled) console.error("Failed to load chats:", e);
+        toast.error("Failed to load chats. Please try again.");
       } finally {
         if (!cancelled) setIsLoadingChats(false);
       }
@@ -99,31 +110,25 @@ export default function ChatSidebar() {
   }, [userId, getChats]);
 
   const handleLogout = async () => {
-    // Show loading toast
     toast.loading("Logging out...");
 
     try {
-      // backend logout
       await apiFetch("/auth/logout", { method: "POST" });
-    } catch (e) {
-      console.error("Backend logout failed (continuing):", e);
+    } catch {
+      toast.error("Error Logging Out.");
     }
 
     try {
-      // clear localhost cookies used by middleware
       await fetch("/api/session/clear", { method: "POST" });
-    } catch (e) {
-      console.error("Local cookie clear failed:", e);
+    } catch {
+      toast.error("Error Logging Out.");
     }
 
-    //  update auth UI state
     await auth.refresh();
 
-    // Dismiss loading toast and show success
     toast.dismiss();
     toast.success("Logged out successfully");
 
-    // hard redirect so no cached protected UI remains
     router.replace("/login");
     router.refresh();
   };
@@ -137,6 +142,61 @@ export default function ChatSidebar() {
     },
     [chats, router],
   );
+
+  // open confirm dialog from item
+  const onRequestDelete = useCallback(
+    (id: string) => {
+      const found = chats.find((c) => c.id === id);
+      setDeleteChatId(id);
+      setDeleteChatTitle(found?.title || "this chat");
+    },
+    [chats],
+  );
+
+  const closeDeleteDialog = useCallback(() => {
+    if (isDeleting) return;
+    setDeleteChatId(null);
+    setDeleteChatTitle("");
+  }, [isDeleting]);
+
+  // confirm delete -> call API + update UI + redirect if active
+  const confirmDelete = useCallback(async () => {
+    if (!deleteChatId) return;
+
+    const toastId = toast.loading("Deleting chat...");
+
+    try {
+      setIsDeleting(true);
+
+      if (!baseUrl) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL");
+
+      const res = await fetch(`${baseUrl}/api/chats/${deleteChatId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        throw new Error(msg || `Delete failed (${res.status})`);
+      }
+
+      setChats((prev) => prev.filter((c) => c.id !== deleteChatId));
+
+      // if you deleted the chat you're currently viewing
+      if (currentChatId === deleteChatId) {
+        router.push("/chat");
+      }
+
+      toast.success("Chat deleted", { id: toastId });
+      setDeleteChatId(null);
+      setDeleteChatTitle("");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to delete chat", { id: toastId });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [deleteChatId, currentChatId, router]);
 
   return (
     <>
@@ -225,10 +285,12 @@ export default function ChatSidebar() {
                 {chats.map((c) => (
                   <SidebarLinkItem
                     key={c.id}
+                    id={c.id}
                     icon={<MessageSquare size={18} />}
                     label={c.title}
                     href={`/chat/${c.id}`}
                     isActive={currentChatId === c.id}
+                    onDelete={onRequestDelete}
                   />
                 ))}
               </div>
@@ -244,7 +306,6 @@ export default function ChatSidebar() {
               onClick={() => router.push("/dashboard/settings")}
               className="flex items-center gap-3 min-w-0 hover:bg-sidebar-accent/50 rounded-md px-2 py-1.5 transition-colors flex-1"
             >
-              {/* Avatar with image or initial */}
               <Avatar className="h-9 w-9 shrink-0">
                 {avatarSrc ? (
                   <AvatarImage
@@ -258,7 +319,6 @@ export default function ChatSidebar() {
                 </AvatarFallback>
               </Avatar>
 
-              {/* Name + email */}
               {!collapsed && (
                 <div className="min-w-0 text-left flex-1">
                   <p className="text-sm font-medium text-sidebar-foreground truncate">
@@ -271,7 +331,6 @@ export default function ChatSidebar() {
               )}
             </button>
 
-            {/* Right: logout */}
             {!collapsed && (
               <Button
                 variant="ghost"
@@ -294,6 +353,7 @@ export default function ChatSidebar() {
           </div>
         </div>
       </aside>
+
       <SearchChatModal
         open={openSearch}
         chats={chatTitles}
@@ -302,30 +362,71 @@ export default function ChatSidebar() {
         onSelectChat={onSelectChatTitle}
         onNewChat={handleNewChat}
       />
+
+      {/* Delete confirm dialog */}
+      <Dialog
+        open={!!deleteChatId}
+        onOpenChange={(open) => !open && closeDeleteDialog()}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete chat?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete{" "}
+              <span className="font-semibold">{deleteChatTitle}</span>. This
+              action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-4 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={closeDeleteDialog}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="gap-2 ml-2"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
 
-/* --- Link-based sidebar item for chats (prevents full page reload) --- */
+/* --- Link-based sidebar item for chats --- */
 
 function SidebarLinkItem({
+  id,
   icon,
   label,
   href,
   isActive,
+  onDelete,
 }: {
+  id: string;
   icon: React.ReactNode;
   label: string;
   href: string;
   isActive?: boolean;
+  onDelete: (id: string) => void;
 }) {
   return (
-    <div className="relative group w-full flex justify-center">
+    <div className="relative group w-full flex justify-between">
       <Link
         href={href}
         prefetch={true}
         className={clsx(
-          "flex items-center w-full rounded-md transition-colors",
+          "flex items-center w-full rounded-l-md transition-colors",
           "text-sidebar-foreground text-[14px]",
           "gap-3 px-3 py-2 justify-start",
           isActive
@@ -336,11 +437,27 @@ function SidebarLinkItem({
         <span>{icon}</span>
         <span className="truncate">{label}</span>
       </Link>
+
+      <button
+        onClick={(e) => {
+          e.preventDefault(); 
+          e.stopPropagation();
+          onDelete(id);
+        }}
+        aria-label="Delete chat"
+        className={clsx(
+          "transition-colors cursor-pointer",
+          "text-sidebar-foreground pr-2 rounded-r-md text-[14px]",
+          isActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+            : "group-hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+        )}
+      >
+        <Trash className="w-4 h-4" />
+      </button>
     </div>
   );
 }
-
-/* --- components below unchanged --- */
 
 function SidebarItem({
   icon,

@@ -10,11 +10,11 @@ import { Card } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
-import Background from "@/../public/images/roadmap.png";
 import { OtpDialog } from "@/components/auth/OtpDialog";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import { apiFetch } from "@/lib/api";
+import GoogleLogin from "./GoogleLogin";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -74,7 +74,8 @@ export default function SignupForm() {
         id: toastId,
         description: "Please try again later",
       });
-      console.error("Signup Error:", error);
+      // console.error("Signup Error:", error);
+      toast.error("Signup error. Please try again.")
     }
   };
 
@@ -112,7 +113,8 @@ export default function SignupForm() {
       toast.error("OTP verification failed!", {
         id: toastId,
       });
-      console.error(error);
+      // console.error(error);
+      toast.error("OTP verification failed! Please try again.")
     }
   };
 
@@ -137,7 +139,8 @@ export default function SignupForm() {
       toast.error("Failed to resend OTP ", {
         id: toastId,
       });
-      console.error("Resend OTP error:", error);
+      // console.error("Resend OTP error:", error);
+      toast.error("Failed to resend OTP. Please try again.")
     }
   };
 
@@ -279,9 +282,7 @@ export default function SignupForm() {
               <span className="h-px flex-1 bg-border" />
             </div>
 
-            <Button className="w-full h-10 bg-grey text-foreground hover:bg-grey/80 flex items-center justify-center gap-3 border border-border">
-              <FcGoogle size={18} /> Google
-            </Button>
+            <GoogleLogin />
 
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}

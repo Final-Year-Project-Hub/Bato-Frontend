@@ -78,6 +78,7 @@ export default function AdminDashboard() {
         });
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
+        
       } finally {
         setLoading(false);
       }

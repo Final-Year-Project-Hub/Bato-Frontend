@@ -93,7 +93,7 @@ export default function SecuritySettings() {
         toast.error(data.message || "Failed to update password", { id: toastId });
       }
     } catch (error) {
-      console.error("Password update error:", error);
+      // console.error("Password update error:", error);
       toast.error("Failed to update password", {
         id: toastId,
         description: "Please try again later",
@@ -137,7 +137,7 @@ export default function SecuritySettings() {
         toast.error(data.message || "Failed to delete account", { id: toastId });
       }
     } catch (error) {
-      console.error("Account deletion error:", error);
+      // console.error("Account deletion error:", error);
       toast.error("Failed to delete account", {
         id: toastId,
         description: "Please try again later",

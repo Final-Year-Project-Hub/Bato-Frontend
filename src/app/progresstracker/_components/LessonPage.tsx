@@ -11,57 +11,203 @@ import { Button } from "@/components/ui/button";
 import QuizModal from "./QuizModal";
 import { useState } from "react";
 
-export type LessonResponse = {
+// export type LessonResponse = {
+//   title: string;
+//   phase_number: number;
+//   phase_title: string;
+
+//   sections: {
+//     introduction: { markdown: string };
+
+//     detailed_core_concepts: {
+//       title: string;
+//       markdown: string;
+//       key_points: string[];
+//     }[];
+
+//     code_examples: {
+//       title: string;
+//       language: string;
+//       code: string;
+//       explanation_markdown: string;
+//     }[];
+
+//     real_world_examples: { title: string; markdown: string }[];
+
+//     hypothetical_scenario: { title: string; markdown: string };
+
+//     key_characteristics: string[];
+//   };
+
+//   why_important: string;
+//   key_concepts: string[];
+//   learning_objectives: string[];
+
+//   learning_resources: {
+//     title: string;
+//     type: string;
+//     url: string | null;
+//     estimated_time: string;
+//   }[];
+
+//   practice_exercises: {
+//     title: string;
+//     difficulty: string;
+//     description: string;
+//     estimated_time: string;
+//   }[];
+
+//   related_topics: string[];
+//   estimated_hours: number;
+//   difficulty_level: string;
+//   doc_links: string[];
+// };
+
+/**
+ 
+Topic-related types matching Bato-Ai's TopicDetail schema*/
+
+export interface LearningResource {
+  title: string;
+  type: string; // article, video, tutorial, documentation
+  url?: string;
+  estimated_time?: string;
+}
+
+export interface PracticeExercise {
+  title: string;
+  description: string;
+  difficulty: string; // beginner, intermediate, advanced
+  estimated_time: string;
+}
+
+// New nested section interfaces
+export interface IntroductionSection {
+  markdown: string;
+}
+
+export interface DetailedCoreConcept {
+  title: string;
+  markdown: string;
+  key_points: string[];
+}
+
+export interface CodeExample {
+  title: string;
+  language: string; // jsx, ts, js, python, etc
+  code: string;
+  explanation_markdown: string;
+}
+
+export interface RealWorldExample {
+  title: string;
+  markdown: string;
+}
+
+export interface HypotheticalScenario {
+  title: string;
+  markdown: string;
+}
+
+export interface TopicSections {
+  introduction: IntroductionSection;
+  detailed_core_concepts: DetailedCoreConcept[];
+  code_examples: CodeExample[];
+  real_world_examples: RealWorldExample[];
+  hypothetical_scenario?: HypotheticalScenario;
+  key_characteristics: string[];
+}
+
+export interface LessonResponse {
+  // Basic info
   title: string;
   phase_number: number;
   phase_title: string;
 
-  sections: {
-    introduction: { markdown: string };
+  // Main content sections (nested structure)
+  sections: TopicSections;
 
-    detailed_core_concepts: {
-      title: string;
-      markdown: string;
-      key_points: string[];
-    }[];
-
-    code_examples: {
-      title: string;
-      language: string;
-      code: string;
-      explanation_markdown: string;
-    }[];
-
-    real_world_examples: { title: string; markdown: string }[];
-
-    hypothetical_scenario: { title: string; markdown: string };
-
-    key_characteristics: string[];
-  };
-
+  // Supporting content
   why_important: string;
   key_concepts: string[];
+
+  // Learning path
   learning_objectives: string[];
+  learning_resources: LearningResource[];
+  practice_exercises: PracticeExercise[];
 
-  learning_resources: {
-    title: string;
-    type: string;
-    url: string | null;
-    estimated_time: string;
-  }[];
-
-  practice_exercises: {
-    title: string;
-    difficulty: string;
-    description: string;
-    estimated_time: string;
-  }[];
-
+  // Next steps
   related_topics: string[];
+  next_topic?: string;
+
+  // Metadata
   estimated_hours: number;
   difficulty_level: string;
   doc_links: string[];
-};
+} 
+export interface RoadmapPhase {
+  id: string;
+  phase_number: number;
+  phase_title: string;
+  description: string;
+  duration: string;
+  topics: RoadmapTopic[];
+}
+
+export interface RoadmapTopic {
+  id: string;
+  topic_name: string;
+  description: string;
+  resources: RoadmapResource[];
+  practice_projects?: string[];
+}
+
+export interface RoadmapResource {
+  title: string;
+  url: string;
+  type: "documentation" | "tutorial" | "video" | "article" | "course" | "other";
+}
+
+export interface RoadmapData {
+  goal: string;
+  intent?: string; // Fix: was missing
+  proficiency: string;
+  total_duration: string;
+  phases: RoadmapPhase[];
+}
+
+ 
+export interface UserContext {
+  user_id: string;
+  user_name: string;
+  known_technologies: string[];
+}
+
+
+export interface FastAPIStreamPayload {
+  message: string;
+  conversation_history: ConversationMessage[];
+  user_context: UserContext;
+  strict_mode?: boolean; // Matches Python snake_case
+}
+
+
+export interface ConversationMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+export interface SSETokenEvent {
+  event: "token";
+  data: string;
+}
+
+export interface SSEErrorEvent {
+  event: "error";
+  data: string;
+}
+
+export type SSEEvent = SSETokenEvent | SSEErrorEvent;
 
 export function Md({ children }: { children: string }) {
   return (

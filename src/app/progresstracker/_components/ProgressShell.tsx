@@ -68,7 +68,8 @@ export default function ProgressShell({
         }
       } catch (e: any) {
         if (!cancelled) {
-          console.error("❌ progress fetch failed:", e?.message || e);
+          // console.error("❌ progress fetch failed:", e?.message || e);
+          toast.error("Failed to load progress data. Please try again.");
         }
       }
     })();
@@ -193,6 +194,7 @@ export default function ProgressShell({
 }
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 function ProgressShellSkeleton() {
   return (

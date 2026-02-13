@@ -112,7 +112,8 @@ export default function ChatInterface({
         });
       }
     } catch (error) {
-      console.error("Logout error:", error);
+      // console.error("Logout error:", error);
+      toast.error("Logout failed ")
       await fetch("/api/session/clear", { method: "POST" });
 
       await auth.refresh();
@@ -440,7 +441,8 @@ export default function ChatInterface({
           lastLoadedChatIdRef.current = initialChatId;
         }
       } catch (e) {
-        console.error(e);
+        // console.error(e);
+        toast.error("Failed to load chat messages. Please try again.")
       }
     })();
 
